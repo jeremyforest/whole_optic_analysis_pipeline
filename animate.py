@@ -40,13 +40,13 @@ def animate(input_data_folder, path_output_video):
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_31'
+    experiment = 'experiment_37'
 
-    # input_data_folder = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/images'.format(experiment)
-    # path_output_video = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/{}.avi'. format(experiment, experiment)
+    # input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_11_13/{}/images'.format(experiment)
+    # path_output_video = '/media/jeremy/Data/Data_Jeremy/2019_11_13/{}/{}.avi'.format(experiment, experiment)
 
-    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_10_12/{}/denoised_images'.format(experiment)
-    path_output_video = '/media/jeremy/Data/Data_Jeremy/2019_10_12/{}/{}_denoised.avi'.format(experiment, experiment)
+    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_12_07/{}/denoised_images'.format(experiment)
+    path_output_video = '/media/jeremy/Data/Data_Jeremy/2019_12_07/{}/{}_denoised.avi'.format(experiment, experiment)
 
     # input_data_folder = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/comparison_images'.format(experiment)
     # path_output_video = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/{}_comparison.avi'. format(experiment, experiment)

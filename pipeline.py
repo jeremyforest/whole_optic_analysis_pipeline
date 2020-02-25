@@ -18,17 +18,17 @@ parser.add_argument("-t", "--trefide_pipeline", action="store_true" , help="this
 args = parser.parse_args()
 
 if args.input_data_folder:
-    # input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_10_12'
+    # input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_11_13'
     input_data_folder = args.input_data_folder
     print("working on data in :" + str(input_data_folder))
 
-# experiment= 'experiment_1'
+# experiment= 'experiment_3'
 for experiment in next(os.walk(input_data_folder))[1]:
     print('\n {}'.format(experiment))
     if os.path.exists(input_data_folder + '/{}/raw_data'.format(experiment)):
         if args.png_conversion:
             path_input_npy = input_data_folder + '/{}/raw_data'.format(experiment)
-            path_output_images = input_data_folder + '/{}/images'.format(experiment)
+            path_output_images = input_data_folder + '/{}/images/'.format(experiment)
             if os.path.exists(path_output_images):
                 print ("image folder for {} already exists".format(experiment))
                 try:

@@ -125,7 +125,7 @@ def play_3d(movie,
         cv2.waitKey(100)
 
 
-def denoiser(path_input_npy, path_output_data, path_output_images_denoised, block_height=16, block_width=16):
+def denoiser(path_input_npy, path_output_data, path_output_images_denoised, block_height=8, block_width=8):
     ## files imports
     Ytemp = []
     files = os.listdir(path_input_npy)
@@ -209,14 +209,18 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_31'
+    experiment = 'experiment_37'
 
-    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_10_12'
+    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_12_07'
     path_input_npy = input_data_folder + '/{}/raw_data'.format(experiment)
     path_output_data = input_data_folder + '/{}/'.format(experiment)
     path_output_images_denoised = input_data_folder + '/{}/denoised_images'.format(experiment)
     # path_output_images_comparison = input_data_folder + '/{}/comparison_images'.format(experiment)
 
-    # os.mkdir(path_output_images_denoised)
+    try:
+        os.mkdir(path_output_images_denoised)
+    except FileExistsError:
+        pass
     # os.mkdir(path_output_images_comparison)
+
     denoiser(path_input_npy, path_output_data, path_output_images_denoised, 8, 8)
