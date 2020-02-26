@@ -6,25 +6,67 @@ import os
 import pickle
 import json
 from roipoly.roipoly import RoiPoly, MultiRoi
+import argparse
+
+"""
+how to use with no timings:
+python time-serie_pixel_analysis.py \
+--main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--experiments 1 \
+--experiments 10 \
+--time 300 \
+--time 900
+
+with timings:
+python time-serie_pixel_analysis.py \
+--main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--experiments 1 \
+--experiments 10 \
+--timings \
+--draw_laser_timings \
+--draw_dlp_timings \
+--time 300 \
+--time 900
+"""
+
+parser = argparse.ArgumentParser(description="options")
+parser.add_argument("--main_folder_path", required=True, action="store" ,
+                        help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
+parser.add_argument("--experiments", required=True, action="append", type=int,
+                        help="values of experiments to go over")
+parser.add_argument("--denoised", default=False, action="store_true",
+                        help="if True, will use denoised data")
+parser.add_argument("--timings", default=False, action="store_true",
+                        help="if True, will use time as index; otherwise uses frame")
+parser.add_argument("--draw_laser_timings", default=False, action="store_true",
+                        help="if set to true: will draw laser timings on plot")
+parser.add_argument("--draw_dlp_timings", default=False, action="store_true",
+                        help="if set to true: will draw laser timings on plot")
+parser.add_argument("--time", action="append", type=int,
+                        help="start and end frame of window used for plotting data")
+args = parser.parse_args()
+
 
 # experiments = [10,11,12,13,14]
-experiments = range(1,31)
+# experiments = range(250,281)
 # experiments = ['merged_37_39']
 # experiment = 15
-denoised_images = False
-draw_laser_timings = True
-draw_dlp_timings = False
-timing = True
-time_init = 0
-time_end = 1400
+main_folder_path = args.main_folder_path
+experiments = range(args.experiments[0], args.experiments[1])
+denoised_images = args.denoised
+timing = args.timings
+draw_laser_timings = args.draw_laser_timings
+draw_dlp_timings = args.draw_dlp_timings
+time_init = args.time[0]
+time_end = args.time[1]
 baseline_starting_frame = 10
 baseline_frame_number = 10
 
 def images_list(folder):
     files_len = len(os.listdir(folder))
     image_list = []
-    # for i in range(time_init,time_end):
-    for i in range(files_len):
+    for i in range(time_init,time_end):
+    # for i in range(files_len):
         image_name = 'image'+ str(i) + '.png'
         image_list.append(image_name)
     return image_list
@@ -49,9 +91,9 @@ for experiment in tqdm(experiments):
     ### PATHS ###
     print(f"processing experiment - {experiment}")
     # experiment = 15
-    path_input = "/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{}/images/".format(experiment)
-    path_input_denoised = "/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{}/denoised_images/".format(experiment)
-    path_output = "/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{}/".format(experiment)
+    path_input = f"{main_folder_path}experiment_{experiment}/images/"
+    path_input_denoised = f"{main_folder_path}experiment_{experiment}/denoised_images/"
+    path_output = f"{main_folder_path}experiment_{experiment}/"
     roi_file_path = path_output + 'roi_masks.txt'
 
     if denoised_images:

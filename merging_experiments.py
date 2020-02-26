@@ -5,27 +5,45 @@ import matplotlib.pyplot as plt
 import cv2
 import json
 import pdb
+import argparse
 
+"""
+how to use:
+python merging_experiments.py \
+--main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--experiments 1 \
+--experiments 10 \
+--use_dlp_timing
+"""
+
+parser = argparse.ArgumentParser(description="options")
+parser.add_argument("--main_folder_path", required=True, action="store",
+                        help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
+parser.add_argument("--experiments", required=True, action="append", type=int,
+                        help="values of experiments to go over")
+parser.add_argument("--use_dlp_timing", default=False, action="store_true",
+                        help="if True, will use dlp activation as index for merging")
+parser.add_argument("--use_laser_timing", default=False, action="store_true",
+                        help="if True, will use laser activation as index for merging")
+parser.add_argument("--manual_timings", default=False, action="append",
+                        help="manually give the timings that will be used as index for merging")
+args = parser.parse_args()
+
+
+path = args.main_folder_path
 
 ## Expriments to merge
-experiments = range(21,31)
-
-## Will need to try and implement this into the main pipeline with
-## an argument from the command line
-merging = True
+experiments = range(args.experiments[0], args.experiments[1])
+# experiments = range(21,31)
 
 ## if use_dlp_timing == false then need to manualy input
 ## the frames to synch on for each experiment
-use_dlp_timing = True
-use_laser_timing = True
+use_dlp_timing = args.use_dlp_timing
+use_laser_timing = args.use_laser_timing
 
 ## expe 10-14, laser timing
-manual_timings_laser = [644, 644, 647, 645, 594]
-manual_timings_dlp = []
-
-# png_conversion = False
-# animate = False
-
+for timing in args.manual_timings:
+    manual_timings_laser.append(timing)
 
 def load_json_timing_data(path_output, experiment):
     with open(f'{path_output}experiment_{experiment}_timings.json') as file:
@@ -49,13 +67,15 @@ if merging:
     for experiment in experiments:
         # experiment = 252
         print(f'experiment - {experiment}')
-        path_input = "/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{}/raw_data/".format(experiment)
-        path_json_timing_data_file = "/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{}/".format(experiment)
+        path_input = f"{path}experiment_{experiment}/raw_data/"
+        path_json_timing_data_file = f"{path}experiment_{experiment}/"
 
-        if (use_dlp_timing or use_laser_timing):
-            path_output = f"/media/jeremy/Data/local/Data_manip/2019_12_24/experiment_merged_{experiments[0]}_{experiments[-1]}/raw_data/"
+        if use_laser_timing:
+            path_output = f"{path}experiment_merged_{experiments[0]}_{experiments[-1]}_laser/raw_data/"
+        elif use_dlp_timing:
+            path_output = f"{path}experiment_merged_{experiments[0]}_{experiments[-1]}_dlp/raw_data/"
         else:
-            path_output = f"/media/jeremy/Data/local/Data_manip/2019_12_24/experiment_merged_{experiments[0]}_{experiments[-1]}_manual/raw_data/"
+            path_output = f"{path}experiment_merged_{experiments[0]}_{experiments[-1]}_manual/raw_data/"
 
         if os.path.exists(path_output):
             pass
@@ -120,7 +140,7 @@ if merging:
         for experiment in experiments:
             print(f"working on experiment {experiment} - {frame} / {new_min_file_list_length}")
             # experiment = 10
-            path_input = f"/media/jeremy/Data/local/Data_manip/2020_02_18/experiment_{experiment}/raw_data/"
+            path_input = f"{path}experiment_{experiment}/raw_data/"
             if (frame == 0 and experiment == experiments[0]):
                 img_size = int(np.sqrt(np.load(f"{path_input}image{frame}.npy").size)) ## will break for non square images
                 _averaged_image = np.zeros((img_size*img_size)) ## temporary image that will be used as storage buffer to average over experiments

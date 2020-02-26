@@ -1,9 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+
+"""
+how to use:
+python plotting_graphs.py \
+--main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--experiments 1 \
+--experiments 10 \
+--columns 10 \
+--rows 10
+"""
+
+parser = argparse.ArgumentParser(description="options")
+parser.add_argument("--main_folder_path", required=True, action="store",
+                        help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
+parser.add_argument("--experiments", required=True, action="append", type=int,
+                        help="values of experiments to go over")
+parser.add_argument("--columns", required=True, action="store", type=int,
+                        help="number of columns of the resulting graph")
+parser.add_argument("--rows", required=True, action="store", type=int,
+                        help="number of rows of the resulting graph")
+args = parser.parse_args()
 
 
-path = "/media/jeremy/Data/local/Data_manip/2020_02_18/"
-experiments = range(1,31)
+
+path = args.main_folder_path
+experiments = range(args.experiments[0], args.experiments[1])
+# experiments = range(250,281)
 # experiments = [10,11,12,13,14,15,16,18,19,20,21]
 
 graphs = 4
@@ -32,8 +56,8 @@ graph3 = 'delta F over F0 ephys style.png'
 # plt.savefig(f"{path}summary_figure_experiment_{experiments[0]}-{experiments[-1]}.png")
 # plt.savefig(f"{path}summary_figure_experiment_{experiments[0]}-{experiments[-1]}.svg")
 
-columns = 5 #5
-rows = 6 #10
+columns = args.columns #5
+rows = args.rows #10
 fig, ax = plt.subplots(rows, columns, figsize=(50,50), sharex='col', sharey='row')
 experiment = 0
 for row in range(rows):
