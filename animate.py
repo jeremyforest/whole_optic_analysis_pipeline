@@ -7,10 +7,6 @@ import scipy
 import os
 from tqdm import tqdm
 
-# input_data_folder = '/media/jeremy/Data/Data_Jeremy/20_08_2019/experiment_36/images'
-# path_output_video = '/media/jeremy/Data/Data_Jeremy/20_08_2019/experiment_36/experiment_36.avi'
-
-
 def images_list(folder):
     files_len = len(os.listdir(folder))
     image_list = []
@@ -40,13 +36,13 @@ def animate(input_data_folder, path_output_video):
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_37'
+    experiment = 'experiment_131'
 
     # input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_11_13/{}/images'.format(experiment)
     # path_output_video = '/media/jeremy/Data/Data_Jeremy/2019_11_13/{}/{}.avi'.format(experiment, experiment)
 
-    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_12_07/{}/denoised_images'.format(experiment)
-    path_output_video = '/media/jeremy/Data/Data_Jeremy/2019_12_07/{}/{}_denoised.avi'.format(experiment, experiment)
+    input_data_folder = '/media/jeremy/Data/local/Data_manip/2020_03_02/{}/denoised_images'.format(experiment)
+    path_output_video = '/media/jeremy/Data/local/Data_manip/2020_03_02/{}/{}_denoised.avi'.format(experiment, experiment)
 
     # input_data_folder = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/comparison_images'.format(experiment)
     # path_output_video = '/media/jeremy/Data/Data_Jeremy/20_08_2019/{}/{}_comparison.avi'. format(experiment, experiment)

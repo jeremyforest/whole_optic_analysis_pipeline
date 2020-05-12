@@ -72,7 +72,10 @@ for experiment in next(os.walk(input_data_folder))[1]:
                             print('denoised image files for {} already exist'.format(experiment))
                         else:
                             print('denoised image list is incomplete, need to re-run conversion')
-                            trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 16, 16)
+                            try:
+                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 16, 16)
+                            except:
+                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 8, 8)
                             animate.animate(path_output_images_denoised, video_name_denoised)
                     except:
                         pass

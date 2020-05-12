@@ -26,15 +26,15 @@ args = parser.parse_args()
 
 
 path = args.main_folder_path
-experiments = range(args.experiments[0], args.experiments[1])
+experiments = range(args.experiments[0], args.experiments[1]+1)
 # experiments = range(250,281)
 # experiments = [10,11,12,13,14,15,16,18,19,20,21]
 
 graphs = 4
-graph0 = 'pixel_time_serie.png'
-graph1 = 'pixel_time_serie_with_backg_substraction.png'
-graph2 = 'delta F over F0.png'
-graph3 = 'delta F over F0 ephys style.png'
+graph0 = 'pixel_time_serie_whole_data.png'
+graph1 = 'pixel_time_serie_with_backg_substraction_whole_data.png'
+graph2 = 'delta_F_over_F0__whole_data.png'
+graph3 = 'delta_F_over_F0_ephys_style_whole_data.png'
 
 # fig, ax = plt.subplots(len(experiments),4, figsize=(100,100))
 # for experiment in range(len(experiments)):

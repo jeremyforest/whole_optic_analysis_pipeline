@@ -10,6 +10,8 @@ import os
 from tqdm import tqdm
 import sys
 from skimage import io
+import scipy.interpolate as interp
+
 # import pdb
 
 from trefide.denoiser import batch_decompose, batch_recompose, overlapping_batch_decompose, overlapping_batch_recompose
@@ -38,7 +40,7 @@ def thresholds(fov_height, fov_width, nb_channels, num_frames, Y, block_height, 
     print('estimating spatial and temporal stats')
     spatial_stats = []
     temporal_stats = []
-    # T = min(6000, num_frames)
+    # num_frames = min(6000, num_frames)
     max_blocks = 40
     spatial_thresh_sim = 1e5
     temporal_thresh_sim = 1e5
@@ -125,7 +127,89 @@ def play_3d(movie,
         cv2.waitKey(100)
 
 
-def denoiser(path_input_npy, path_output_data, path_output_images_denoised, block_height=8, block_width=8):
+def get_spline_trend(data,
+                     nb_knots,
+                     order=3,
+                     axis=-1,
+                     q=.05):
+    """
+    Fits a robust adaptive b-spline to an input dataset in order to remove slow
+    trend and features due to application of step and ramp stimuli.
+    Modified from trefide preprocess.py file.
+
+    Parameter:
+        data: input the data with format ??
+        knots: number of knots
+        order: b-spline degree
+        axis: the axis on which the spline is applied
+
+    Return:
+        trend:
+    """
+    # data = Y
+    # nb_knots = 10
+    # order = 3
+    data = data.reshape(128*128,1,-1)
+    knots = np.r_[[0]*(order+1),
+                    np.ceil(np.linspace(0,
+                                        data.shape[-1],
+                                        nb_knots)),
+                    ([data.shape[-1]]*(order+1))]
+    # knots
+
+    data.shape
+    x = np.arange(data.shape[-1])
+    x.shape
+    data = np.squeeze(data)
+    data.shape
+    y = data[0]
+    x.shape, y.shape, knots.shape, order
+
+    x_bis = np.linspace(-3, 3, 50)
+    y_bis = np.exp(-x_bis**2) + 0.1 * np.random.randn(50)
+    t_bis = [-1, 0, 1]
+    k_bis = 3
+    t_bis = np.r_[(x_bis[0],)*(k_bis+1),
+                t_bis,
+                (x_bis[-1],)*(k_bis+1)]
+    x_bis.shape, y_bis.shape, t_bis.shape, k_bis
+    spl = interp.make_lsq_spline(x_bis, y_bis, t_bis, k_bis)
+    print(spl)
+
+    def spline_fit(y):
+        bspl = interp.make_lsq_spline(x=x, y=y, t=knots, k=order)
+        return bspl(x)
+
+    def robust_spline_fit(y):
+        bspl = interp.make_lsq_spline(x=x, y=y, t=knots, k=order)
+        resid = np.abs(bspl(x) - y)
+        keep_idx = resid <= np.percentile(resid, (1 - q) * 100)
+        bspl = interp.make_lsq_spline(
+            x=x[keep_idx], y=y[keep_idx], t=knots, k=order)
+
+        return bspl(x)
+
+    trend = np.apply_along_axis(spline_fit, axis, data)
+
+    return trend
+
+def remove_spline_trend(data,
+                        trend):
+    """
+    Removes the fitted spline trend from the raw data
+
+    Parameters:
+        data:
+        trend:
+    Returns:
+
+    """
+
+    return data - trend
+
+
+
+def denoiser(path_input_npy, path_output_data, path_output_images_denoised, block_height=32, block_width=32):
     ## files imports
     Ytemp = []
     files = os.listdir(path_input_npy)
@@ -138,10 +222,24 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
     y = np.vstack(Ytemp)
     size_y = int(np.sqrt(y[0].size)) ## will only work as long as fov is square
     y = y.reshape(len(y), size_y, size_y)
+
+    ## dimensions handling for denoising
     y = np.expand_dims(y, axis=3)
     #3D imaging data needs to be of shape (fov_height, fov_width, nb_channels, time)
     Y = np.transpose(y, [1,2,3,0])
+    # Y = np.asarray(Y,order='C',dtype=np.float64)[:,:,:1,608:1376]
     Y = np.asarray(Y,order='C',dtype=np.float64)[:,:,:1,:]
+
+
+    ## detrending
+    # data = Y
+    trend = get_spline_trend(Y,10)
+    new_Y = remove_spline_trend(Y,trend)
+    Y = new_Y
+
+
+
+
     fov_height, fov_width, nb_channels, num_frames = Y.shape  ## Note: the input data size needs to match 'block_height' & 'block_width' parameter so
                                                                 ## that there will be whole blocks when performing batch processing.
     print("data shape: " + str(Y.shape))
@@ -153,7 +251,7 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
     d_sub = 1 #4
     t_sub = 1 #19
 
-    max_comp = 30
+    max_comp = 40
     consec_failures = 3
     tol = 0.0005
 
@@ -161,7 +259,7 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
     block_width = block_width
 
     enable_temporal_denoiser = True
-    enable_spatial_denoiser = False
+    enable_spatial_denoiser = True
     overlapping = True
 
     #Iteratively Simulate & Fit Noise To Collect Samples
@@ -170,8 +268,8 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
                                                   d_sub, t_sub, enable_temporal_denoiser, enable_spatial_denoiser,
                                                   path_output_data, plot=True)
 
-    # spatial_thresh = 1.
-    # temporal_thresh = 2.4
+    # spatial_thresh = 1.4
+    # temporal_thresh = 2.40
     print('batch decompose and recompose processing')
     Y = np.asarray(Y,order='C',dtype=np.float64)[:,:,:,:]
     Y.shape
@@ -209,9 +307,9 @@ def denoiser(path_input_npy, path_output_data, path_output_images_denoised, bloc
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_37'
+    experiment = 'experiment_131'
 
-    input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_12_07'
+    input_data_folder = '/media/jeremy/Data/local/Data_manip/2020_03_02'
     path_input_npy = input_data_folder + '/{}/raw_data'.format(experiment)
     path_output_data = input_data_folder + '/{}/'.format(experiment)
     path_output_images_denoised = input_data_folder + '/{}/denoised_images'.format(experiment)
@@ -223,4 +321,4 @@ if __name__ == "__main__":
         pass
     # os.mkdir(path_output_images_comparison)
 
-    denoiser(path_input_npy, path_output_data, path_output_images_denoised, 8, 8)
+    denoiser(path_input_npy, path_output_data, path_output_images_denoised, 32, 32)
