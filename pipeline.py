@@ -18,17 +18,18 @@ parser.add_argument("-t", "--trefide_pipeline", action="store_true" , help="this
 args = parser.parse_args()
 
 if args.input_data_folder:
-    # input_data_folder = '/media/jeremy/Data/Data_Jeremy/2019_10_12'
+    # input_data_folder = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
     input_data_folder = args.input_data_folder
     print("working on data in :" + str(input_data_folder))
 
-# experiment= 'experiment_1'
+# experiment= 'experiment_3'
 for experiment in next(os.walk(input_data_folder))[1]:
+    # experiment = next(os.walk(input_data_folder))[1][0]
     print('\n {}'.format(experiment))
     if os.path.exists(input_data_folder + '/{}/raw_data'.format(experiment)):
         if args.png_conversion:
             path_input_npy = input_data_folder + '/{}/raw_data'.format(experiment)
-            path_output_images = input_data_folder + '/{}/images'.format(experiment)
+            path_output_images = input_data_folder + '/{}/images/'.format(experiment)
             if os.path.exists(path_output_images):
                 print ("image folder for {} already exists".format(experiment))
                 try:
@@ -72,7 +73,10 @@ for experiment in next(os.walk(input_data_folder))[1]:
                             print('denoised image files for {} already exist'.format(experiment))
                         else:
                             print('denoised image list is incomplete, need to re-run conversion')
-                            trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 16, 16)
+                            try:
+                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 32, 32)
+                            except:
+                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 8, 8)
                             animate.animate(path_output_images_denoised, video_name_denoised)
                     except:
                         pass
@@ -80,7 +84,7 @@ for experiment in next(os.walk(input_data_folder))[1]:
                     print ("creating folder {}".format(path_output_images_denoised))
                     os.mkdir(input_data_folder + '/{}/denoised_images'.format(experiment))
                     print('processing images through trefide pipeline')
-                    trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 16, 16)
+                    trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 8, 8)
                     animate.animate(path_output_images_denoised, video_name_denoised)
             except:
                 print('cannot use trefide pipeline')
