@@ -10,11 +10,16 @@ import copy
 # parser.add_argument("--experiments", required=True, action="append", type=int,
 #                         help="values of experiments to go over")
 
+## add draw_dlp and draw_laser for when no dlp or no laser
+normalize = False
+classical_ephy = False
+if classical_ephy:
+    from classical_ephy import import_ephy_data
 
-normalize = True
+path = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02/'
 
-path = '/media/jeremy/Data/local/Data_manip/2020_03_02/'
-experiments = [131]
+#### ONLY ENTER EXPERIMENTS WITH NO TIMINGS PROBLEMS
+experiments = [132]
 # experiments = [131,132,133,141,142,148]
 
 
@@ -29,10 +34,14 @@ laser_on = 2
 laser_off = 3
 
 rois_signal = []
+if classical_ephy:
+    ephy_signal = []
 
 for experiment in experiments:
     print(f'working on: {path}experiment_{experiment}')
-    rois_signal.append(np.load(f'{path}experiment_{experiment}/dF_over_F0_backcorrect.npy'))
+    rois_signal.append(np.load(f'{path}experiment_{experiment}/dF_over_F0_backcorrect.npy', allow_pickle=True))
+    if classical_ephy:
+        ephy_signal.append(import_ephy_data(path, experiment))
 
 
 signal_length = []

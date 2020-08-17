@@ -12,7 +12,7 @@ import datetime
 """
 how to use with no timings:
 python time-serie_pixel_analysis.py \
---main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--main_folder_path /home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/ \
 --experiments 1 \
 --experiments 10 \
 --time 300 \
@@ -20,7 +20,7 @@ python time-serie_pixel_analysis.py \
 
 with timings:
 python time-serie_pixel_analysis.py \
---main_folder_path /media/jeremy/Data/local/Data_manip/2020_02_05/ \
+--main_folder_path /home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/ \
 --experiments 1 \
 --experiments 10 \
 --timings \
@@ -51,9 +51,9 @@ args = parser.parse_args()
 
 
 main_folder_path = args.main_folder_path
-# main_folder_path = '/media/jeremy/Data/local/Data_manip/2020_03_02/'
+# main_folder_path = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/'
 experiments = range(args.experiments[0], args.experiments[1]+1)
-# experiment = 1
+# experiment = 4
 # experiment = 'merged_121_150_dlp'
 denoised_images = args.denoised
 # denoised_images = False
@@ -190,7 +190,7 @@ for experiment in tqdm(experiments):
             else:
                 img = cv2.imread(path_input+image,cv2.IMREAD_GRAYSCALE)
             mask = roi[1]
-            roi_average = np.mean(img[mask])
+            roi_average = np.mean(img[mask.T])
             tmp_time_serie_roi.append(roi_average)
         rois_signal.append(tmp_time_serie_roi)
     print ('generating data plots')

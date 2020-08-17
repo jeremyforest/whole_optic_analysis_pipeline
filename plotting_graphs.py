@@ -14,7 +14,7 @@ python plotting_graphs.py \
 
 parser = argparse.ArgumentParser(description="options")
 parser.add_argument("--main_folder_path", required=True, action="store",
-                        help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
+                        help="main folder absolute path, something like /media/jeremy/Data/local/Data_manip/2020_02_05")
 parser.add_argument("--experiments", required=True, action="append", type=int,
                         help="values of experiments to go over")
 parser.add_argument("--columns", required=True, action="store", type=int,
