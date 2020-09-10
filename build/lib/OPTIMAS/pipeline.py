@@ -5,16 +5,17 @@ import argparse
 import pdb
 
 ## own scripts
-import png_convertion as png
-import animate as animate
+import convert_npy_to_png
+import make_video
 import trefide_pipeline as trefide
 
 ## command line arguments
 parser = argparse.ArgumentParser(description="analysis to run")
-parser.add_argument("-i", "--input_data_folder", help="input folder where the data to analyze is stored. It is the master folder with the date of the experiment.")
-parser.add_argument("-p", "--png_conversion", action="store_true" , help="this is to run the script png_conversion - convert npy files to images.")
-parser.add_argument("-a", "--animate", action="store_true" , help="this is to run the script animate - convert images to video.")
-parser.add_argument("-t", "--trefide_pipeline", action="store_true" , help="this is to run the script trefide_pipeline - denoise, demix and compress the data.")
+parser.add_argument("--input_data_folder", help="input folder where the data to analyze is stored. It is the master folder with the date of the experiment.")
+parser.add_argument("--merge_npy", help="merge all the individual npy files into one bigger file for faster I/O")
+parser.add_argument("--convert_npy_to_png", action="store_true" , help="this is to run the script png_conversion - convert npy files to images.")
+parser.add_argument("--make_video", action="store_true" , help="this is to run the script animate - convert images to video.")
+parser.add_argument("--trefide_pipeline", action="store_true" , help="this is to run the script trefide_pipeline - denoise, demix and compress the data.")
 args = parser.parse_args()
 
 if args.input_data_folder:
@@ -24,10 +25,10 @@ if args.input_data_folder:
 
 # experiment= 'experiment_3'
 for experiment in next(os.walk(input_data_folder))[1]:
-    # experiment = next(os.walk(input_data_folder))[1][0]
     print('\n {}'.format(experiment))
     if os.path.exists(input_data_folder + '/{}/raw_data'.format(experiment)):
-        if args.png_conversion:
+
+        if args.convert_npy_to_png:
             path_input_npy = input_data_folder + '/{}/raw_data'.format(experiment)
             path_output_images = input_data_folder + '/{}/images/'.format(experiment)
             if os.path.exists(path_output_images):
@@ -48,7 +49,7 @@ for experiment in next(os.walk(input_data_folder))[1]:
         else:
              print("{} not converting npy files to png".format(experiment))
 
-        if args.animate:
+        if args.make_video:
             path_input_images = input_data_folder + '/{}/images'.format(experiment)
             path_output_video =  input_data_folder + '/{}/'.format(experiment)
             video_name = path_output_video+'{}.avi'.format(experiment)
