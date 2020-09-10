@@ -15,7 +15,7 @@ def read_image_size(json_file_path):
     image_size_x, image_size_y = data['fov'][0][1], data['fov'][0][3]
     return (int(image_size_x/image_bin), int(image_size_y/image_bin))
 
-def images_list(folder, type):
+def images_list(folder, extension="png", data_type='raw'):
     """
     If the npy file names have no leading zeros then the  list is not ordered
     correctly. This serve to create an ordered list from the length of the
@@ -26,6 +26,9 @@ def images_list(folder, type):
     files_len = len(next(os.walk(folder))[2])
     image_list = []
     for i in range(files_len):
-        image_name = f'image{str(i)}.{type}'
+        if data_type == 'raw':
+            image_name = f'image{str(i)}.{extension}'
+        elif data_type == 'denoised':
+            image_name = f'image_denoised{str(i)}.{extension}'
         image_list.append(image_name)
     return image_list

@@ -7,14 +7,15 @@ from tqdm import tqdm
 
 from OPTIMAS.utils.files_handling import images_list, read_image_size
 
-def make_video(input_data_folder, experiment, data_type='raw', start_frame=0, end_frame=int(-1)):
+def make_video(input_data_folder, experiment, data_type, start_frame=0, end_frame=int(-1)):
     if data_type == 'raw':
         input_data_images = f'{input_data_folder}/{experiment}/images/'
         path_output_video = f'{input_data_folder}/{experiment}/{experiment}_raw.avi'
+        filenames = images_list(input_data_images, 'png', 'raw')  ## needs this for as long as the name of the files are that way. Need to think about changing them with leading 0 or something
     elif data_type == 'denoised':
-        print('not implemented yet')
-        pass
-    filenames = images_list(input_data_images, 'png')  ## needs this for as long as the name of the files are that way. Need to think about changing them with leading 0 or something
+        input_data_images = f'{input_data_folder}/{experiment}/images_denoised/'
+        path_output_video = f'{input_data_folder}/{experiment}/{experiment}_denoised.avi'
+        filenames = images_list(input_data_images, 'png', 'denoised')
     if start_frame != 0 | end_frame != -1:
         filenames = filenames[start_frame:end_frame]
     json_file_path = f"{input_data_folder}/{experiment}/{experiment}_info.json"
@@ -26,7 +27,7 @@ def make_video(input_data_folder, experiment, data_type='raw', start_frame=0, en
     try:
         for filename in tqdm(filenames):
             # filename = "image1.png"
-            img = cv2.imread(f'{input_data_folder}/{experiment}/images/{filename}')
+            img = cv2.imread(f'{input_data_images}{filename}')
             out.write(img)
         out.release()
     except :
@@ -40,4 +41,5 @@ if __name__ == "__main__":
     # input_data_folder = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02/{}/denoised_images'.format(experiment)
     # path_output_video = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02/{}/{}_denoised.avi'.format(experiment, experiment)
 
-    make_video(input_data_folder, experiment, 'raw')
+#    make_video(input_data_folder, experiment, 'raw')
+    make_video(input_data_folder, experiment, data_type = 'denoised')

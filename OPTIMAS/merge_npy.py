@@ -14,7 +14,7 @@ def merge_npy(input_data_folder, experiment):
     output_data_folder = f'{input_data_folder}/{experiment}'
     json_file_path = f"{input_data_folder}/{experiment}/{experiment}_info.json"
     output = []
-    files = images_list(path_input_npy_folder, 'npy')
+    files = images_list(path_input_npy_folder, extension = 'npy')
     size_img = read_image_size(json_file_path)
     for file in tqdm(files):
         image = np.load(f"{path_input_npy_folder}/{file}").reshape(size_img[0], size_img[1])

@@ -5,9 +5,9 @@ import argparse
 
 ## own scripts
 from OPTIMAS.merge_npy import merge_npy
-from OPTIMAS.convert_npy_to_png import png_conversion
+from OPTIMAS.convert_npy_to_png import png_conversion, png_conversion_from_one_npy
 from OPTIMAS.make_video import make_video
-#import OPTIMAS.trefide_pipeline as trefide
+import OPTIMAS.trefide_pipeline2 as trefide
 
 
 #########################
@@ -17,7 +17,8 @@ python OPTIMAS/pipeline.py \
 --input_data_folder /mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02 \
 --merge_npy \
 --convert_npy_to_png \
---make_video
+--make_video \
+--trefide_pipeline
 """
 #########################
 
@@ -53,7 +54,7 @@ if args.input_data_folder:
     print("working on data in :" + str(input_data_folder))
 
 for experiment in next(os.walk(input_data_folder))[1]:
-    print(f'\n -----------------{experiment}-----------------')
+    print(f'\n ================ {experiment} ================')
 
     if os.path.exists(f'{input_data_folder}/{experiment}/raw_data'):
 
@@ -66,7 +67,7 @@ for experiment in next(os.walk(input_data_folder))[1]:
                     merge_npy(input_data_folder, experiment)
                 except:
                     print('could not genete merged npy files')
-                    
+
         if args.convert_npy_to_png:
             path_output_images = f'{input_data_folder}/{experiment}/images'
             if os.path.exists(path_output_images):
@@ -95,38 +96,26 @@ for experiment in next(os.walk(input_data_folder))[1]:
                 print('creating video file')
                 make_video(input_data_folder,
                            experiment,
-                           'raw')
+                           data_type = 'raw')
         else:
             print('not creating video file')
 
         if args.trefide_pipeline:
             try:
-                path_output_processed_data = path_output_video
-                video_name_denoised = path_output_processed_data+'{}_denoised.avi'.format(experiment)
-                path_output_images_denoised = input_data_folder + '/{}/denoised_images/'.format(experiment)
-                if os.path.exists(path_output_images_denoised):
-                    print ("denoised image folder for {} already exists".format(experiment))
-                    try:
-                        if len(next(os.walk(input_data_folder + '/{}/raw_data'.format(experiment)))[2]) == len(next(os.walk(input_data_folder + '/{}/denoised_images'.format(experiment)))[2]):
-                            print('denoised image files for {} already exist'.format(experiment))
-                        else:
-                            print('denoised image list is incomplete, need to re-run conversion')
-                            try:
-                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 32, 32)
-                            except:
-                                trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 8, 8)
-                            animate.animate(path_output_images_denoised, video_name_denoised)
-                    except:
-                        pass
+                if os.path.isfile(f'{input_data_folder}/{experiment}/denoised_data.npy'):
+                    print("denoised data file already exists")
                 else:
-                    print ("creating folder {}".format(path_output_images_denoised))
-                    os.mkdir(input_data_folder + '/{}/denoised_images'.format(experiment))
-                    print('processing images through trefide pipeline')
-                    trefide.denoiser(path_input_npy, path_output_processed_data, path_output_images_denoised, 8, 8)
-                    animate.animate(path_output_images_denoised, video_name_denoised)
+                    print('denoising data')
+                    trefide.denoising_pipeline(input_data_folder, experiment)
+                    print('generating images from numpy files for denoised data')
+                    png_conversion_from_one_npy(input_data_folder, experiment)
+                    print('generating video file for denoised data')
+                    make_video(input_data_folder,
+                               experiment,
+                               data_type='denoised',
+                               start_frame=0,
+                               end_frame=int(-1))
             except:
-                print('cannot use trefide pipeline')
-    else:
-        print(('no raw folder in {}').format(experiment))
+                print('error while processing trefide pipeline')
 
-print("processing done")
+    print(f"================  processing done {experiment}  ================")
