@@ -54,7 +54,7 @@ if args.input_data_folder:
     print("working on data in :" + str(input_data_folder))
 
 for experiment in next(os.walk(input_data_folder))[1]:
-    print(f'\n ================ {experiment} ================')
+    print(f'\n ================ preprocessing {experiment} ================')
 
     if os.path.exists(f'{input_data_folder}/{experiment}/raw_data'):
 
@@ -118,4 +118,4 @@ for experiment in next(os.walk(input_data_folder))[1]:
             except:
                 print('error while processing trefide pipeline')
 
-    print(f"================  processing done {experiment}  ================")
+    print(f"================  preprocessing done {experiment}  ================")

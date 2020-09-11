@@ -173,4 +173,5 @@ for trace in range(len(rois_signal[0])-2):  ## the last one is the dlp and laser
                 name = f'trace {trace}- average using moving average',
                 #line_color = color[experiment],
                 opacity=0.5))
+fig.write_html("path/to/file.html")
 fig.show()
