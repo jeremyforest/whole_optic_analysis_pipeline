@@ -8,6 +8,7 @@ from OPTIMAS.merge_npy import merge_npy
 from OPTIMAS.convert_npy_to_png import png_conversion, png_conversion_from_one_npy
 from OPTIMAS.make_video import make_video
 import OPTIMAS.trefide_pipeline2 as trefide
+import OPTIMAS.time_serie_pixel_analysis as analysis 
 
 
 #########################
@@ -99,6 +100,9 @@ for experiment in next(os.walk(input_data_folder))[1]:
                            data_type = 'raw')
         else:
             print('not creating video file')
+
+        if args.trefide_pipeline:
+
 
         if args.trefide_pipeline:
             try:

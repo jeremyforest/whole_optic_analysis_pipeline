@@ -9,10 +9,15 @@ from roipoly.roipoly import RoiPoly, MultiRoi
 import argparse
 import datetime
 
+
+from OPTIMAS.utils.files_handling import images_list, read_fps, load_timing_data
+
+
+
 """
 how to use with no timings:
 python time-serie_pixel_analysis.py \
---main_folder_path /home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/ \
+--main_folder_path /mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02 \
 --experiments 1 \
 --experiments 10 \
 --time 300 \
@@ -20,7 +25,7 @@ python time-serie_pixel_analysis.py \
 
 with timings:
 python time-serie_pixel_analysis.py \
---main_folder_path /home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/ \
+--main_folder_path /mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02 \
 --experiments 1 \
 --experiments 10 \
 --timings \
@@ -69,76 +74,29 @@ if args.time != None:
     time_end = args.time[1]
 
 
-fps = 400
 
-def images_list(folder):
-    """
-    Generate an ordered list of images that will be used for subsequent analysis
-    based on the number of files in the desired folder.
-    Necessary because of the numbering of the files which makes the extracting based
-    on name un-ordered.
-    Input: folder where are stored the images
-    Output: image list ordered from 0 to last.
-    """
-    # folder = path_input
-    files_len = len(os.listdir(folder))
-    image_list = []
-    if args.time == None:
-        for i in range(files_len):
-            image_name = 'image'+ str(i) + '.png'
-            image_list.append(image_name)
-    else:
-        for i in range(time_init,time_end):
-            image_name = 'image'+ str(i) + '.png'
-            image_list.append(image_name)
-    return image_list
+def time_serie(input_data_folder, experiment, data_type='raw'):
 
-def load_json_timing_data(path_output, experiment):
-    """
-    This function allows to load the json file where the timings of the laser, dlp, camera
-    and ephys are stored.
-    Input: path of the json file and the experiment folder number as input.
-    Output: timings, each in their own variable
-    """
-    with open(f'{path_output}experiment_{experiment}_timings.json') as file:
-        timings_data = dict(json.load(file))
-    timings_dlp_on = timings_data['dlp']['on']
-    timings_dlp_off = timings_data['dlp']['off']
-    timings_laser_on = timings_data['laser']['on']
-    timings_laser_off = timings_data['laser']['off']
-    timings_camera_images = []  ## timings of the images as per the dcam api
-    for images_timings in timings_data['camera']:
-        for image_timing in images_timings:
-            timings_camera_images.append(image_timing)
-
-    timings_camera_images_bis = timings_data['camera_bis'] ## timing of the first frame as per manual clock
-    print(f'timing difference between first image metadata and manual log is \
-            {(timings_camera_images[0] - timings_camera_images_bis[0]) * 1000}')   ## ms difference
-
-    return timings_dlp_on, timings_dlp_off, timings_camera_images, timings_laser_on, timings_laser_off, timings_camera_images_bis
-
-
-print('processing experiments')
-for experiment in tqdm(experiments):
     data_export = [] # placeholder for saving data at the end
 
     ### PATHS ###
-    print(f"processing experiment - {experiment}")
-    path_input = f"{main_folder_path}experiment_{experiment}/images/"
-    path_input_denoised = f"{main_folder_path}experiment_{experiment}/denoised_images/"
-    path_output = f"{main_folder_path}experiment_{experiment}/"
-    roi_file_path = path_output + 'roi_masks.txt'
+    if data_type == 'raw':
+        # path_input
+        path_input_images = f"{input_data_folder}/{experiment}/images/"
+    elif data_type ==  'denoised':
+        # path_input_denoised
+        path_input_images = f"{input_data_folder}/experiment_{experiment}/denoised_images/"
 
-    ### use raw or denoised data ###
-    if denoised_images:
-        images = images_list(path_input_denoised)
-    else:
-        images = images_list(path_input)
-        # images = image_list
+    path_output = f"{input_data_folder}/{experiment}/"
+    roi_file_path = f'{path_output}/roi_masks.txt'
+
+    images = images_list(path_input_images)
 
     #############
     ### ROIS ####
     #############
+    ## TODO: use the image from the dlp to do the ROIs ? what if not all rois
+    ## on it ? Use a global Roi file ? use an input
     if os.path.isfile(roi_file_path):
         print('ROI file exists')
         with open(roi_file_path, "rb") as file:
@@ -146,15 +104,16 @@ for experiment in tqdm(experiments):
     else:
         print('ROI file doesnt exists')
 
-        if denoised_images:  ## denoised image size is not the same as the raw image
-            w,h = cv2.imread(path_input_denoised+images[0],cv2.IMREAD_GRAYSCALE).shape
-        else:
-            w,h = cv2.imread(path_input+images[0],cv2.IMREAD_GRAYSCALE).shape
+        w,h = cv2.imread(f'{path_input_images}/{images[0]}',cv2.IMREAD_GRAYSCALE).shape
 
         ### ref image for defining rois, need to think about what it can be. The best would be a DIC image ?
         ### use an automatic segmentation algorithm if possible with a DIC image ?
-        image = cv2.imread(path_output + 'neurons.png'.format(experiment), cv2.IMREAD_GRAYSCALE)
-        image = cv2.resize(image, (w,h))
+        image = cv2.imread(f'{input_data_folder}/{experiment}/neurons.png',
+                           cv2.IMREAD_GRAYSCALE)
+        if image.size == 0:
+            print('no neurons image in main folder, cannot define ROIs')
+        else:
+            image = cv2.resize(image, (w,h))
         # Show the image
         fig = plt.figure()
         plt.imshow(image, interpolation='none', cmap='gray')
@@ -172,7 +131,7 @@ for experiment in tqdm(experiments):
             mask = roi.get_mask(image)
             rois.append([name, mask])
         plt.legend()
-        plt.savefig(path_output+'rois.png')
+        plt.savefig(f'{path_output}/rois.png')
         plt.close()
         ## writing rois to disk
         with open(roi_file_path, "wb") as file:
@@ -184,11 +143,7 @@ for experiment in tqdm(experiments):
     for roi in rois:
         tmp_time_serie_roi = []
         for image in tqdm(images):
-            # image = 'image0.npy'
-            if denoised_images:
-                img = cv2.imread(path_input_denoised+image,cv2.IMREAD_GRAYSCALE)
-            else:
-                img = cv2.imread(path_input+image,cv2.IMREAD_GRAYSCALE)
+            img = cv2.imread(f'{path_input_images}/{image}',cv2.IMREAD_GRAYSCALE)
             mask = roi[1]
             roi_average = np.mean(img[mask.T])
             tmp_time_serie_roi.append(roi_average)
@@ -198,10 +153,16 @@ for experiment in tqdm(experiments):
 
 
     ### TIMING DATA ###
+    json_timings_file = f'{input_data_folder}/{experiment}/{experiment}_timings.json'
+    json_info_file = f'{input_data_folder}/{experiment}/{experiment}_info.json'
+
     if timing:
-        timings_dlp_on, timings_dlp_off, timings_camera_images, \
-        timings_laser_on, timings_laser_off, \
-        timings_camera_images_bis = load_json_timing_data(path_output, experiment)
+        timings_dlp_on, \
+        timings_dlp_off, \
+        timings_camera_images, \
+        timings_laser_on, \
+        timings_laser_off, \
+        timings_camera_images_bis = load_timing_data(json_timings_file)
 
         # timings_camera_images_bis.append(660) ## timings perf_counter equivalent to unix timestamp
 
@@ -217,8 +178,9 @@ for experiment in tqdm(experiments):
         timings_camera_images_new = []
         timings_camera_images_new.append(timings_camera_images[0])
         for nb_of_times in range(1,len(timings_camera_images)):
-            fps = fps ## to get for each expe
+            fps = read_fps(json_info_file) ## to get for each expe
             timings_camera_images_new.append(timings_camera_images[0] + (1/fps * nb_of_times))
+
         ## diagnostic
         # plt.plot(np.array(timings_camera_images_new), range(0,len(timings_camera_images_new)))
 
@@ -293,13 +255,18 @@ for experiment in tqdm(experiments):
     if timing == False:
         x_axis = np.arange(0,len(images), 1)
     for i in range(len(rois_signal)):
-        plt.plot(x_axis, np.array(rois_signal[i]), color = colors[i], label = rois[i][0], alpha=0.7)
+        plt.plot(x_axis, np.array(rois_signal[i]),
+                 color = colors[i], label = rois[i][0], alpha=0.7)
         if timing:
             for i in range(len(timings_dlp_on)):
                 if draw_dlp_timings:
-                    plt.axvspan(timings_dlp_on[i] - x_axis_sorted_values[0],timings_dlp_off[i] - x_axis_sorted_values[0], color='blue', alpha=0.05)
+                    plt.axvspan(timings_dlp_on[i] - x_axis_sorted_values[0],
+                                timings_dlp_off[i] - x_axis_sorted_values[0],
+                                color='blue', alpha=0.05)
                 if draw_laser_timings:
-                    plt.axvspan(timings_laser_on[i] - x_axis_sorted_values[0],timings_laser_off[i] - x_axis_sorted_values[0], color='red', alpha=0.05)
+                    plt.axvspan(timings_laser_on[i] - x_axis_sorted_values[0],
+                                timings_laser_off[i] - x_axis_sorted_values[0],
+                                color='red', alpha=0.05)
     plt.legend()
     plt.title('Pixel value evolution with frames')
     plt.ylabel('Value')
@@ -420,3 +387,12 @@ for experiment in tqdm(experiments):
         plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{args.time[0]}_{args.time[1]}.svg')
         plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{args.time[0]}_{args.time[1]}.png')
     plt.close()
+
+
+
+if __name__ == "__main__":
+
+    experiment = 'experiment_132'
+    input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
+
+    time_serie(input_data_folder, experiment, data_type='raw')

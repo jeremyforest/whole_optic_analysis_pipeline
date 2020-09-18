@@ -32,3 +32,41 @@ def images_list(folder, extension="png", data_type='raw'):
             image_name = f'image_denoised{str(i)}.{extension}'
         image_list.append(image_name)
     return image_list
+
+def read_fps(json_file_path):
+    """
+    Open json file, read the fps the data was recorded at.
+    input: json file path
+    output: int (fps)
+    """
+    with open(json_file_path) as f:
+        data = json.load(f)
+    fps = data['fps'][0]
+    return fps
+
+def load_timing_data(json_file_path):
+    """
+    This function allows to load the json file where the timings of the laser, dlp, camera
+    and ephys are stored.
+    Input: path of the json file
+    Output: timings, each in their own variable
+    """
+    with open(json_file_path) as file:
+        timings_data = dict(json.load(file))
+    timings_dlp_on = timings_data['dlp']['on']
+    timings_dlp_off = timings_data['dlp']['off']
+    timings_laser_on = timings_data['laser']['on']
+    timings_laser_off = timings_data['laser']['off']
+    timings_camera_images = []  ## timings of the images as per the dcam api
+    for images_timings in timings_data['camera']:
+        for image_timing in images_timings:
+            timings_camera_images.append(image_timing)
+
+    timings_camera_images_bis = timings_data['camera_bis'] ## timing of the first frame as per manual clock
+    print(f'timing difference between first image metadata and manual log is \
+            {(timings_camera_images[0] - timings_camera_images_bis[0]) * 1000}')   ## ms difference
+
+    return timings_dlp_on, timings_dlp_off, timings_camera_images, timings_laser_on, timings_laser_off, timings_camera_images_bis
+
+def import_roi_mask(file_path):
+    pass

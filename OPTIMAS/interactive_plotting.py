@@ -16,7 +16,8 @@ classical_ephy = False
 if classical_ephy:
     from classical_ephy import import_ephy_data
 
-path = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02/'
+#path = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02/'
+path = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
 
 #### ONLY ENTER EXPERIMENTS WITH NO TIMINGS PROBLEMS
 experiments = [132]
