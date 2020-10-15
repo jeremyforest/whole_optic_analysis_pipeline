@@ -7,8 +7,9 @@ import argparse
 from OPTIMAS.merge_npy import merge_npy
 from OPTIMAS.convert_npy_to_png import png_conversion, png_conversion_from_one_npy
 from OPTIMAS.make_video import make_video
-import OPTIMAS.trefide_pipeline2 as trefide
-import OPTIMAS.time_serie_pixel_analysis as analysis 
+#import OPTIMAS.trefide_pipeline2 as trefide
+import OPTIMAS.time_serie_pixel_analysis as analysis
+import OPTIMAS.interactive_plotting as interactive
 
 
 #########################
@@ -19,6 +20,7 @@ python OPTIMAS/pipeline.py \
 --merge_npy \
 --convert_npy_to_png \
 --make_video \
+--roi_analysis \
 --trefide_pipeline
 """
 #########################
@@ -44,6 +46,10 @@ parser.add_argument("--make_video",
                     action="store_true" ,
                     help="this is to run the script animate - convert \
                           images to video.")
+parser.add_argument("--roi_analysis",
+                    action='store_true',
+                    help='this is to run the script time_serie_pixel_analysis \
+                          plot time_series of defined ROIs')
 parser.add_argument("--trefide_pipeline",
                     action="store_true",
                     help="this is to run the script trefide_pipeline - denoise \
@@ -60,6 +66,7 @@ for experiment in next(os.walk(input_data_folder))[1]:
     if os.path.exists(f'{input_data_folder}/{experiment}/raw_data'):
 
         if args.merge_npy:
+            print(f'\n == step 1: merging file ==')
             if os.path.exists(f'{input_data_folder}/{experiment}/raw_data.npy'):
                 print('merged file already exists')
             else:
@@ -70,6 +77,7 @@ for experiment in next(os.walk(input_data_folder))[1]:
                     print('could not genete merged npy files')
 
         if args.convert_npy_to_png:
+            print(f'\n == step 2: convert to png ==')
             path_output_images = f'{input_data_folder}/{experiment}/images'
             if os.path.exists(path_output_images):
                 print(f"image folder for {experiment} already exists")
@@ -90,21 +98,33 @@ for experiment in next(os.walk(input_data_folder))[1]:
              print("{} not converting npy files to png".format(experiment))
 
         if args.make_video:
-            path_output_video = f'{input_data_folder}/{experiment}/{experiment}_raw.avi'
-            if os.path.isfile(path_output_video):
-                print('existing video file')
-            else:
-                print('creating video file')
-                make_video(input_data_folder,
-                           experiment,
-                           data_type = 'raw')
+            try:
+                print(f'\n == step 3: making video ==')
+                path_output_video = f'{input_data_folder}/{experiment}/{experiment}_raw.avi'
+                if os.path.isfile(path_output_video):
+                    print('existing video file')
+                else:
+                    print('creating video file')
+                    make_video(input_data_folder,
+                               experiment,
+                               data_type = 'raw')
+            except:
+                print('could not creating video file')
         else:
             print('not creating video file')
 
-        if args.trefide_pipeline:
+        if args.roi_analysis:
+            print(f'\n == step 4: performing analysis ==')
+            try:
+                print('static plots')
+                analysis.time_serie(input_data_folder, experiment)
+                print('interactive plots')
+                interactive.interactive_plotting(input_data_folder, experiment)
+            except:
+                print('error while analysing time series of this experiment')
 
-
         if args.trefide_pipeline:
+            print(f'\n == step 5: denoising data ==')
             try:
                 if os.path.isfile(f'{input_data_folder}/{experiment}/denoised_data.npy'):
                     print("denoised data file already exists")

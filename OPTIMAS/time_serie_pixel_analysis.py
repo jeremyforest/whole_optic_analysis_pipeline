@@ -8,74 +8,20 @@ import json
 from roipoly.roipoly import RoiPoly, MultiRoi
 import argparse
 import datetime
+import time
+from threading import Timer, Thread
 
+from OPTIMAS.utils.files_handling import images_list, read_fps, \
+                                         load_timing_data, read_image_size
 
-from OPTIMAS.utils.files_handling import images_list, read_fps, load_timing_data
+def input_path():
+    user_input = input('input neurons png file or ROI mask file:')
+    user_input_ok = True
+    return user_input
 
-
-
-"""
-how to use with no timings:
-python time-serie_pixel_analysis.py \
---main_folder_path /mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02 \
---experiments 1 \
---experiments 10 \
---time 300 \
---time 900
-
-with timings:
-python time-serie_pixel_analysis.py \
---main_folder_path /mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02 \
---experiments 1 \
---experiments 10 \
---timings \
---draw_laser_timings \
---draw_dlp_timings \
---time 300 \
---time 900
-"""
-
-parser = argparse.ArgumentParser(description="options")
-parser.add_argument("--main_folder_path", required=True, action="store" ,
-                        help="main folder absolute path, something like /media/jeremy/Data/local/Data_manip/2020_02_05")
-parser.add_argument("--experiments", required=True, action="append", type=int,
-                        help="values of experiments to go over")
-parser.add_argument("--denoised", default=False, action="store_true",
-                        help="if True, will use denoised data")
-parser.add_argument("--timings", default=False, action="store_true",
-                        help="if True, will use time as index; otherwise uses frame")
-parser.add_argument("--draw_laser_timings", default=False, action="store_true",
-                        help="if set to true: will draw laser timings on plot")
-parser.add_argument("--draw_dlp_timings", default=False, action="store_true",
-                        help="if set to true: will draw laser timings on plot")
-parser.add_argument("--time", action="append", type=int,
-                        help="start and end frame of window used for plotting data")
-args = parser.parse_args()
-
-
-
-
-main_folder_path = args.main_folder_path
-# main_folder_path = '/home/jeremy/Documents/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_05_20/'
-experiments = range(args.experiments[0], args.experiments[1]+1)
-# experiment = 4
-# experiment = 'merged_121_150_dlp'
-denoised_images = args.denoised
-# denoised_images = False
-timing = args.timings
-# timing = True
-draw_laser_timings = args.draw_laser_timings
-# draw_laser_timings = True
-draw_dlp_timings = args.draw_dlp_timings
-# draw_dlp_timings = True
-if args.time != None:
-    time_init = args.time[0]
-if args.time != None:
-    time_end = args.time[1]
-
-
-
-def time_serie(input_data_folder, experiment, data_type='raw'):
+def time_serie(input_data_folder, experiment, data_type='raw',
+               timing=True, draw_laser_timings=True, draw_dlp_timings=True,
+               time_start=0, time_stop=int(-1)):
 
     data_export = [] # placeholder for saving data at the end
 
@@ -88,6 +34,7 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
         path_input_images = f"{input_data_folder}/experiment_{experiment}/denoised_images/"
 
     path_output = f"{input_data_folder}/{experiment}/"
+    # if roi comes from manual countours
     roi_file_path = f'{path_output}/roi_masks.txt'
 
     images = images_list(path_input_images)
@@ -96,7 +43,7 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
     ### ROIS ####
     #############
     ## TODO: use the image from the dlp to do the ROIs ? what if not all rois
-    ## on it ? Use a global Roi file ? use an input
+    ## on it ? Use a global Roi file ? How to define it ?
     if os.path.isfile(roi_file_path):
         print('ROI file exists')
         with open(roi_file_path, "rb") as file:
@@ -104,38 +51,66 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
     else:
         print('ROI file doesnt exists')
 
-        w,h = cv2.imread(f'{path_input_images}/{images[0]}',cv2.IMREAD_GRAYSCALE).shape
+        w,h = read_image_size(f'{input_data_folder}/{experiment}/{experiment}_info.json')
 
-        ### ref image for defining rois, need to think about what it can be. The best would be a DIC image ?
-        ### use an automatic segmentation algorithm if possible with a DIC image ?
-        image = cv2.imread(f'{input_data_folder}/{experiment}/neurons.png',
+        #TODO: ref image for defining rois, need to think about what it can be. The best would be a DIC image ?
+        # use an automatic segmentation algorithm if possible with a DIC image ?
+        neurons_png = f'{input_data_folder}/{experiment}/neurons.png'
+        if os.path.exists(neurons_png):
+            print('neurons file for delimiting ROI exists')
+            image = cv2.imread(f'{input_data_folder}/{experiment}/neurons.png',
                            cv2.IMREAD_GRAYSCALE)
-        if image.size == 0:
-            print('no neurons image in main folder, cannot define ROIs')
         else:
-            image = cv2.resize(image, (w,h))
-        # Show the image
-        fig = plt.figure()
-        plt.imshow(image, interpolation='none', cmap='gray')
-        plt.title("Click on the button to add a new ROI")
-        # Draw multiple ROI
-        multiroi_named = MultiRoi(roi_names=['Background', 'ROI 1', 'ROI 2', 'ROI 3', 'ROI 4', 'ROI 5',
-                                                'ROI 6', 'ROI 7', 'ROI 8', 'ROI 9', 'ROI 10', 'ROI 11',
-                                                'ROI 12', 'ROI 13', 'ROI 14', 'ROI 15', 'ROI 16', 'ROI 17'])
-        # Draw all ROIs
-        plt.imshow(image, interpolation='none', cmap='gray')
-        rois = []
-        for name, roi in multiroi_named.rois.items():
-            roi.display_roi()
-            # roi.display_mean(image)
-            mask = roi.get_mask(image)
-            rois.append([name, mask])
-        plt.legend()
-        plt.savefig(f'{path_output}/rois.png')
-        plt.close()
-        ## writing rois to disk
-        with open(roi_file_path, "wb") as file:
-            pickle.dump(rois, file)
+            print('no neuron image file')
+            pass
+            # print('''need user input for ROI file path: it needs to be an image
+            #         from the image folder where you can see the neurons''')
+            # user_input = [None]
+            # global user_input_ok
+            # user_input_ok = False
+            # thread = Thread(target=input_path, daemon=False)
+            # thread.start()
+            # time.sleep(15)
+            # if user_input_ok:
+            #     thread.join()
+            #     print(user_input)
+            # else:
+            #     thread._stop()
+
+
+        if ROI_path.endswith('.txt'):
+            with open(ROI_path, "rb") as file:
+                rois = pickle.load(file)
+        elif ROI_path.endswith('.png'):
+            image = cv2.imread(ROI_path, cv2.IMREAD_GRAYSCALE)
+            cv2.imwrite(f'{input_data_folder}/{experiment}/neurons.png', image)
+
+            if image.size == 0:
+                print('error with neuron image, cannot define ROIs')
+            else:
+                image = cv2.resize(image, (w,h))
+            # Show the image
+            fig = plt.figure()
+            plt.imshow(image, interpolation='none', cmap='gray')
+            plt.title("Click on the button to add a new ROI")
+            # Draw multiple ROI
+            multiroi_named = MultiRoi(roi_names=['Background', 'ROI 1', 'ROI 2', 'ROI 3', 'ROI 4', 'ROI 5',
+                                                    'ROI 6', 'ROI 7', 'ROI 8', 'ROI 9', 'ROI 10', 'ROI 11',
+                                                    'ROI 12', 'ROI 13', 'ROI 14', 'ROI 15', 'ROI 16', 'ROI 17'])
+            # Draw all ROIs
+            plt.imshow(image, interpolation='none', cmap='gray')
+            rois = []
+            for name, roi in multiroi_named.rois.items():
+                roi.display_roi()
+                # roi.display_mean(image)
+                mask = roi.get_mask(image)
+                rois.append([name, mask])
+            plt.legend()
+            plt.savefig(f'{path_output}/rois.png')
+            plt.close()
+            ## writing rois to disk
+            with open(roi_file_path, "wb") as file:
+                pickle.dump(rois, file)
 
 
     rois_signal = []
@@ -164,8 +139,10 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
         timings_laser_off, \
         timings_camera_images_bis = load_timing_data(json_timings_file)
 
-        # timings_camera_images_bis.append(660) ## timings perf_counter equivalent to unix timestamp
+        # timings perf_counter equivalent to unix timestamp
+        # timings_camera_images_bis.append(660)
 
+        # TODO: handle multiple dlp on/off within each experiment
         if len(timings_dlp_on)>1:
             print('more than 1 timing from DLP ON')
             timings_dlp_on = [timings_dlp_on[0]]
@@ -229,29 +206,35 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
             times_between_two_images.append((x_axis[frame+1] - x_axis[frame]))
         times_between_two_images.append(times_between_two_images[-1])
         nb_images = np.arange(0,len(data[1]), 1)
-        plt.plot(nb_images, np.array(times_between_two_images))
+        #plt.plot(nb_images, np.array(times_between_two_images))
 
         rois_signal = time_sorted_rois_signal
 
     ## for baseline calculation:
     if timing:
-        ## find laser_on index on x_axis
+        # find laser_on index on x_axis
         takeClosest = lambda num,collection:min(collection,key=lambda x:abs(x-num))
         closest_index_laser_on_on_x = takeClosest(timings_laser_on[0]/10**9, x_axis)
         index_laser_on_for_baseline_calc = np.where(x_axis == closest_index_laser_on_on_x)
-        ## baseline starting and ending
-        baseline_starting_frame = index_laser_on_for_baseline_calc[0][0] + 5  ## need to be timed on the frames after laser activation I think
-        baseline_frame_number = 20  ## also need to be adjusted to be up to the frame-1 of dlp activation (the more data, the better the baseline)
-    else :
-        baseline_starting_frame = 10  ## need to be timed on the frames after laser activation I think
-        baseline_frame_number = 10  ## also need to be adjusted to be up to the frame-1 of dlp activation (the more data, the better the baseline)
+        # find dlp_on index on x_axis
+        #closest_index_dlp_on_on_x = takeClosest(timings_dlp_on[0]/10**9, x_axis)
+        #index_dlp_on_for_baseline_calc = np.where(x_axis == closest_index_dlp_on_on_x)
 
+        ## baseline starting and ending
+        ## need to be timed on the frames after laser activation I think
+        baseline_starting_frame = index_laser_on_for_baseline_calc[0][0] + 2
+        #TODO: need to be adjusted to be up to the frame-1 of dlp activation ?
+        baseline_frame_number = 10
+    else :
+        baseline_starting_frame = 10
+        baseline_frame_number = 10
 
 
 
     ### GRAPHS ###
-    ## calculation of F(t)
+    # calculation of F(t)
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    # if timings is False no x_axis has been defined
     if timing == False:
         x_axis = np.arange(0,len(images), 1)
     for i in range(len(rois_signal)):
@@ -270,12 +253,12 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
     plt.legend()
     plt.title('Pixel value evolution with frames')
     plt.ylabel('Value')
-    if args.time == None:
-        plt.savefig(path_output+'pixel_time_serie_whole_data.svg')
-        plt.savefig(path_output+'pixel_time_serie_whole_data.png')
-    else:
-        plt.savefig(f'{path_output}pixel_time_serie_whole_data_{args.time[0]}_{args.time[1]}.svg')
-        plt.savefig(f'{path_output}pixel_time_serie_whole_data_{args.time[0]}_{args.time[1]}.png')
+    if timing == False:
+        plt.savefig(f'{path_output}pixel_time_serie_whole_data.svg')
+        #plt.savefig(path_output+'pixel_time_serie_whole_data.png')
+    elif timing == True:
+        plt.savefig(f'{path_output}pixel_time_serie_whole_data_{time_start}_{time_stop}.svg')
+        #plt.savefig(f'{path_output}pixel_time_serie_whole_data_{args.time[0]}_{args.time[1]}.png')
     plt.close()
 
     ## calculation of F(t) - background(t)
@@ -290,12 +273,12 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
     plt.title('Fluorescence with substracted backg fluorescence (per frame)')
     plt.ylabel('Value')
     plt.legend()
-    if args.time == None:
+    if timing == False:
         plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_whole_data.svg')
-        plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_whole_data.png')
-    else:
-        plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_{args.time[0]}_{args.time[1]}.svg')
-        plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_{args.time[0]}_{args.time[1]}.png')
+        #plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_whole_data.png')
+    elif timing == True:
+        plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_{time_start}_{time_stop}.svg')
+        #plt.savefig(f'{path_output}pixel_time_serie_with_backg_substraction_{args.time[0]}_{args.time[1]}.png')
     plt.close()
 
     ## calculation of percent delta F/F0
@@ -332,12 +315,12 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
             times.append(_times)
     plt.ylabel(r'$\%$ $\Delta$ F/F0')
     plt.legend()
-    if args.time == None:
+    if timing == False:
         plt.savefig(f'{path_output}delta_F_over_F0__whole_data.svg')
-        plt.savefig(f'{path_output}delta_F_over_F0__whole_data.png')
-    else:
-        plt.savefig(f'{path_output}delta_F_over_F0_{args.time[0]}_{args.time[1]}.svg')
-        plt.savefig(f'{path_output}delta_F_over_F0_{args.time[0]}_{args.time[1]}.png')
+        #plt.savefig(f'{path_output}delta_F_over_F0__whole_data.png')
+    elif timing == True:
+        plt.savefig(f'{path_output}delta_F_over_F0_{time_start}_{time_stop}.svg')
+        #plt.savefig(f'{path_output}delta_F_over_F0_{args.time[0]}_{args.time[1]}.png')
     # saving data
     data_export.append(x_axis.tolist())
     data_export.append(times)
@@ -380,12 +363,12 @@ def time_serie(input_data_folder, experiment, data_type='raw'):
                     axs[i].axvspan(timings_dlp_on[j] - x_axis_sorted_values[0],timings_dlp_off[j] - x_axis_sorted_values[0], color='blue', alpha=0.05)
                 if draw_laser_timings:
                     axs[i].axvspan(timings_laser_on[j] - x_axis_sorted_values[0],timings_laser_off[j] - x_axis_sorted_values[0], color='red', alpha=0.05)
-    if args.time == None:
+    if timing == False:
         plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_whole_data.svg')
-        plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_whole_data.png')
-    else:
-        plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{args.time[0]}_{args.time[1]}.svg')
-        plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{args.time[0]}_{args.time[1]}.png')
+        #plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_whole_data.png')
+    elif timing == True:
+        plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{time_start}_{time_stop}.svg')
+        #plt.savefig(f'{path_output}delta_F_over_F0_ephys_style_{args.time[0]}_{args.time[1]}.png')
     plt.close()
 
 
