@@ -18,21 +18,23 @@ python merging_experiments.py \
 
 parser = argparse.ArgumentParser(description="options")
 parser.add_argument("--main_folder_path", required=True, action="store",
-                        help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
+                    help="main folder absolute path, somehting like /media/jeremy/Data/local/Data_manip/2020_02_05")
 parser.add_argument("--experiments", required=True, action="append", type=int,
-                        help="values of experiments to go over")
+                    help="values of experiments to go over")
 parser.add_argument("--use_dlp_timing", default=False, action="store_true",
-                        help="if True, will use dlp activation as index for merging")
+                    help="if True, will use dlp activation as index for merging")
 parser.add_argument("--use_laser_timing", default=False, action="store_true",
-                        help="if True, will use laser activation as index for merging")
+                    help="if True, will use laser activation as index for merging")
 parser.add_argument("--manual_timings", action="append", type=int,
-                        help="manually give the timings that will be used as index for merging")
+                    help="manually give the timings that will be used as index for merging")
+parser.add_argument("--estimate_connections", default=False, action="store_true",
+                    help="used to average images to check for network connections")
 args = parser.parse_args()
 
 merging = True
 
 path = args.main_folder_path
-# path = '/media/jeremy/Data/local/Data_manip/2020_02_28/'
+# path = '/home/jeremy/Downloads/2020_03_06/'
 
 ## Expriments to merge
 experiments = range(args.experiments[0], args.experiments[1])
@@ -44,6 +46,13 @@ use_dlp_timing = args.use_dlp_timing
 # use_dlp_timing = True
 use_laser_timing = args.use_laser_timing
 # use_laser_timing = False
+
+manual_timings_laser = []
+manual_timings_dlp = []
+
+if args.estimate_connections:
+    manual_timings_laser.append(0)
+    manual_timings_dlp.append(0)
 
 ## expe 10-14, laser timing
 if args.manual_timings != None:
