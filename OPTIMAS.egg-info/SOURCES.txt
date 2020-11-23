@@ -13,9 +13,10 @@ OPTIMAS/merge_npy.py
 OPTIMAS/merging_experiments.py
 OPTIMAS/pipeline.py
 OPTIMAS/plotting_graphs.py
-OPTIMAS/time-serie_pixel_analysis.py
+OPTIMAS/time_serie_pixel_analysis.py
 OPTIMAS/timestamp_error_exploration.py
 OPTIMAS/trefide_pipeline.py
+OPTIMAS/trefide_pipeline2.py
 OPTIMAS.egg-info/PKG-INFO
 OPTIMAS.egg-info/SOURCES.txt
 OPTIMAS.egg-info/dependency_links.txt

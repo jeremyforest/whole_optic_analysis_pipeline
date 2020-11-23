@@ -26,15 +26,16 @@ args = parser.parse_args()
 
 
 path = args.main_folder_path
+# path = '~/Downloads/2020_11_05/'
 experiments = range(args.experiments[0], args.experiments[1]+1)
-# experiments = range(250,281)
+# experiments = np.arange(4,30)
 # experiments = [10,11,12,13,14,15,16,18,19,20,21]
 
 graphs = 4
-graph0 = 'pixel_time_serie_whole_data.png'
-graph1 = 'pixel_time_serie_with_backg_substraction_whole_data.png'
-graph2 = 'delta_F_over_F0__whole_data.png'
-graph3 = 'delta_F_over_F0_ephys_style_whole_data.png'
+graph0 = 'pixel_time_serie_whole_data.svg'
+graph1 = 'pixel_time_serie_with_backg_substraction_whole_data.svg'
+graph2 = 'delta_F_over_F0_whole_data.svg'
+graph3 = 'delta_F_over_F0_ephys_style_whole_data.svg'
 
 # fig, ax = plt.subplots(len(experiments),4, figsize=(100,100))
 # for experiment in range(len(experiments)):
@@ -57,11 +58,15 @@ graph3 = 'delta_F_over_F0_ephys_style_whole_data.png'
 # plt.savefig(f"{path}summary_figure_experiment_{experiments[0]}-{experiments[-1]}.svg")
 
 columns = args.columns #5
+# columns = 5
 rows = args.rows #10
+# rows = 6
 fig, ax = plt.subplots(rows, columns, figsize=(50,50), sharex='col', sharey='row')
 experiment = 0
 for row in range(rows):
+    #row = 0
     for column in range(columns):
+        #column = 0
         try:
             print(f'working on experiment - {experiments[experiment]}')
             images_path = f"{path}experiment_{experiments[experiment]}/"

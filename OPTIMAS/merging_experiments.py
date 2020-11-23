@@ -7,6 +7,8 @@ import json
 import pdb
 import argparse
 
+from OPTIMAS.utils.files_handling import read_image_size
+
 """
 how to use:
 python merging_experiments.py \
@@ -34,11 +36,11 @@ args = parser.parse_args()
 merging = True
 
 path = args.main_folder_path
-# path = '/home/jeremy/Downloads/2020_03_06/'
+# path = '/home/jeremy/Downloads/2020_11_05/'
 
 ## Expriments to merge
 experiments = range(args.experiments[0], args.experiments[1])
-# experiments = [121,122,124,125,126,127,130,131,132,133,134,135,136,138,139,141,142,143,144,147,148,150]
+# experiments = np.arange(71,90,1)
 
 ## if use_dlp_timing == false then need to manualy input
 ## the frames to synch on for each experiment
@@ -83,6 +85,7 @@ def load_json_timing_data(path_output, experiment):
 
     return timings_dlp_on, timings_dlp_off, timings_camera_images, timings_laser_on, timings_laser_off, timings_camera_images_bis
 
+import pdb; pdb.set_trace()
 if merging:
     file_list_length = []
     frame_dlp_on = []
@@ -90,10 +93,10 @@ if merging:
 
 
     for experiment in experiments:
-        # experiment = 252
+        # experiment = 4
         print(f'experiment - {experiment}')
         path_input = f"{path}experiment_{experiment}/raw_data/"
-        path_json_timing_data_file = f"{path}experiment_{experiment}/"
+        path_json_file = f"{path}experiment_{experiment}/"
 
         if use_laser_timing:
             path_output = f"{path}experiment_merged_{experiments[0]}_{experiments[-1]}_laser/raw_data/"
@@ -112,51 +115,54 @@ if merging:
         file_list_length.append(len(file_list))
 
 
-        if (use_dlp_timing == True or use_laser_timing == True):
-            ### TIMING DATA ###
-            timings_dlp_on, timings_dlp_off, \
-            timings_camera_images, \
-            timings_laser_on, timings_laser_off, \
-            timings_camera_images_bis = load_json_timing_data(path_json_timing_data_file, experiment)
+        ### TIMING DATA ###
+        timings_dlp_on, timings_dlp_off, \
+        timings_camera_images, \
+        timings_laser_on, timings_laser_off, \
+        timings_camera_images_bis = load_json_timing_data(path_json_file, experiment)
 
-            # to put both dlp and camera timings in the same format --> putting camera images in ns
-            timings_camera_images = [timings_camera_images[i]*10**9 for i in range(len(timings_camera_images))]
-            print(f'frame number: {len(timings_camera_images)}')
+        # to put both dlp and camera timings in the same format --> putting camera images in ns
+        timings_camera_images = [timings_camera_images[i]*10**9 for i in range(len(timings_camera_images))]
+        print(f'frame number: {len(timings_camera_images)}')
 
-            takeClosest = lambda num,collection:min(collection,key=lambda x:abs(x-num))
+        takeClosest = lambda num,collection:min(collection,key=lambda x:abs(x-num))
 
-            # putting dlp and laser timings back into camera time reference
+        # putting dlp and laser timings back into camera time reference
+        if use_dlp_timing:
             _timings_dlp_on = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_dlp_on[0] - timings_camera_images_bis[1])/1000
             _timings_dlp_off = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_dlp_off[0] - timings_camera_images_bis[1])/1000
+        if use_laser_timing:
             _timings_laser_on = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_laser_on[0] - timings_camera_images_bis[1])/1000
             _timings_laser_off = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_laser_off[0] - timings_camera_images_bis[1])/1000
 
             # t = datetime.datetime.fromtimestamp(timings_camera_images[0])
             # (t-datetime.datetime(1970,1,1)).total_seconds()
 
-            timings_dlp_on = []
-            timings_dlp_off = []
-            timings_laser_on = []
-            timings_laser_off = []
+        timings_dlp_on = []
+        timings_dlp_off = []
+        timings_laser_on = []
+        timings_laser_off = []
 
+        if use_dlp_timing:
             timings_dlp_on.append(_timings_dlp_on)
             timings_dlp_off.append(_timings_dlp_off)
+        if use_laser_timing:
             timings_laser_on.append(_timings_laser_on)
             timings_laser_off.append(_timings_laser_off)
 
-            if (use_dlp_timing and use_laser_timing == False):
-                value_to_center_on = takeClosest(timings_dlp_on[0],timings_camera_images)
-                frame_dlp_on.append(timings_camera_images.index(value_to_center_on))
-                print(f'frame to center on: {timings_camera_images.index(value_to_center_on)}')
-            elif (use_dlp_timing == False and use_laser_timing):
-                value_to_center_on = takeClosest(timings_laser_on[0],timings_camera_images)
-                frame_laser_on.append(timings_camera_images.index(value_to_center_on))
-                print(f'frame to center on: {timings_camera_images.index(value_to_center_on)}')
-            elif (use_dlp_timing and use_laser_timing):
-                value_to_center_on_dlp = takeClosest(timings_dlp_on[0],timings_camera_images)
-                value_to_center_on_laser = takeClosest(timings_laser_on[0],timings_camera_images)
-                frame_dlp_on.append(timings_camera_images.index(value_to_center_on_dlp))
-                frame_laser_on.append(timings_camera_images.index(value_to_center_on_laser))
+        if (use_dlp_timing and use_laser_timing == False):
+            value_to_center_on = takeClosest(timings_dlp_on[0],timings_camera_images)
+            frame_dlp_on.append(timings_camera_images.index(value_to_center_on))
+            print(f'frame to center on: {timings_camera_images.index(value_to_center_on)}')
+        elif (use_dlp_timing == False and use_laser_timing):
+            value_to_center_on = takeClosest(timings_laser_on[0],timings_camera_images)
+            frame_laser_on.append(timings_camera_images.index(value_to_center_on))
+            print(f'frame to center on: {timings_camera_images.index(value_to_center_on)}')
+        elif (use_dlp_timing and use_laser_timing):
+            value_to_center_on_dlp = takeClosest(timings_dlp_on[0],timings_camera_images)
+            value_to_center_on_laser = takeClosest(timings_laser_on[0],timings_camera_images)
+            frame_dlp_on.append(timings_camera_images.index(value_to_center_on_dlp))
+            frame_laser_on.append(timings_camera_images.index(value_to_center_on_laser))
 
     print(file_list_length)
     min_file_list_length = np.min(file_list_length)
@@ -184,19 +190,20 @@ if merging:
 
 
     for frame in range(new_min_file_list_length):
-        # frame = 1065
+        # frame = 582
         for experiment, exp_nb in zip(experiments, range(len(experiments))):
+            path_json_file = f"{path}experiment_{experiment}/"
             print(f"working on experiment {experiment} - {frame} / {new_min_file_list_length}")
-            # experiment = 10
+            # experiment = 71
             path_input = f"{path}experiment_{experiment}/raw_data/"
             if (frame == 0 and experiment == experiments[exp_nb]):
-                img_size = int(np.sqrt(np.load(f"{path_input}image{frame}.npy").size)) ## will break for non square images
-                _averaged_image = np.zeros((img_size*img_size)) ## temporary image that will be used as storage buffer to average over experiments
+                img_size = read_image_size(f'{path_json_file}experiment_{experiment}_info.json')
+                _averaged_image = np.zeros((img_size[0]*img_size[1])) ## temporary image that will be used as storage buffer to average over experiments
             if frame <= shift_forward[experiment-experiments[exp_nb]]:
-                img_array = np.zeros((img_size*img_size))  ## black image if no image
+                img_array = np.zeros((img_size[0]*img_size[1]))  ## black image if no image
                 print('padding with empty frame at the beginning')
             elif frame >= file_list_length[exp_nb]:
-                img_array = np.zeros((img_size*img_size))  ## black image if no image
+                img_array = np.zeros((img_size[0]*img_size[1]))  ## black image if no image
                 print('padding with empty frame at the end')
             else:
                 img_array = np.load(f"{path_input}image{frame-shift_forward[experiment-experiments[exp_nb]]}.npy") ## else load the actual image
@@ -210,6 +217,6 @@ if merging:
                 np.save(f"{path_output}image{frame}", averaged_image)
                 print ('image saved')
 
-        _averaged_image = np.zeros((img_size*img_size)) ## reinitialize image used as buffer
+        _averaged_image = np.zeros((img_size[0]*img_size[1])) ## reinitialize image used as buffer
         print ('----')
     print(f"{path_output} done")

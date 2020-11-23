@@ -35,7 +35,7 @@ def denoising_pipeline(input_data_folder, experiment):
     mov = np.load(filename).astype('double')
     num_frames, fov_height, fov_width= mov.shape
     mov = mov.reshape(fov_height, fov_width, num_frames)
-    # mov = mov[:,:,600:600+256]
+    # mov = mov[:,:,700:700+512]
     mov = mov[:,:,:]
     mov = mov.copy(order='C')
     fov_height, fov_width, num_frames = mov.shape
@@ -46,16 +46,16 @@ def denoising_pipeline(input_data_folder, experiment):
     # Enable Decimation
     max_iters_main = 10
     max_iters_init = 40
-    d_sub = 2
-    t_sub = 2
+    d_sub = 1
+    t_sub = 1
 
     # Defaults
     consec_failures = 3
     tol = 5e-3
 
     # Set Blocksize Parameters
-    block_height = 64 #40
-    block_width = 64  #40
+    block_height = 16
+    block_width = 16
     overlapping = True
     enable_temporal_denoiser = True
     enable_spatial_denoiser = True
@@ -108,7 +108,7 @@ def denoising_pipeline(input_data_folder, experiment):
 
     #### Reconstruct Denoised Video
     if not overlapping:
-        # Single Tiling (No need for reqweighting)
+        # Single Tiling (No need for reweighting)
         mov_denoised = np.asarray(batch_recompose(spatial_components,
                                                   temporal_components, block_ranks,
                                                   block_indices))
@@ -123,7 +123,8 @@ def denoising_pipeline(input_data_folder, experiment):
                                                               block_weights))
         np.save(os.path.join(input_data_folder, "denoised_data.npy"), mov_denoised)
 
-
+    comparison_data = np.vstack([mov, mov_denoised, mov-mov_denoised])
+    np.save(os.path.join(input_data_folder, "comparison_data.npy"), comparison_data)
 
     # ### Produce Diagnostics, Single Tiling Pixel-Wise Ranks
     if overlapping:
@@ -169,6 +170,7 @@ def denoising_pipeline(input_data_folder, experiment):
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_132'
-    input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
+    experiment = 'experiment_50'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+
     denoising_pipeline(input_data_folder, experiment)

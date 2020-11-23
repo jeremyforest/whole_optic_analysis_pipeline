@@ -19,13 +19,17 @@ def png_conversion(input_data_folder, experiment):
     '''
     files = os.listdir(f'{input_data_folder}/{experiment}/raw_data/')
     for file in tqdm(files):
-        #file=files[0]
+        #file=files[100]
         if file.endswith('.npy'):
             try:
                 img_array = np.load(f'{input_data_folder}/{experiment}/raw_data/{file}')
                 json_file_path = f"{input_data_folder}/{experiment}/{experiment}_info.json"
                 image_x, image_y = read_image_size(json_file_path)
-                img_array = img_array.reshape(image_x, image_y)
+                #####################################################
+                ##### TO CHANGE IN UPDATED PIPELINE VERSION #########
+                # img_array = img_array.reshape(image_x, image_y)
+                img_array = img_array.reshape(image_y, image_x)
+                ####################################################
                 output_path = f'{input_data_folder}/{experiment}/images/'
                 img_name = output_path+file.replace('.npy', '.png')
                 plt.imsave(img_name, img_array, cmap='gray')
@@ -34,6 +38,7 @@ def png_conversion(input_data_folder, experiment):
 
 def png_conversion_from_one_npy(input_data_folder, experiment):
     input_file = np.load(f'{input_data_folder}/{experiment}/denoised_data.npy')
+    # input_file = np.load(f'{input_data_folder}/{experiment}/comparison_data.npy')
     input_file.shape
     json_file_path = f"{input_data_folder}/{experiment}/{experiment}_info.json"
     image_x, image_y = read_image_size(json_file_path)
@@ -51,18 +56,24 @@ def png_conversion_from_one_npy(input_data_folder, experiment):
 
 
 if __name__ == "__main__":
-    # experiment = 'experiment_132'
-    # path_input = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
-    experiment = 'experiment_merged_3_19_manual'
-    path_input = f'/home/jeremy/Downloads/2020_03_06'
+
+    # experiment = 'experiment_merged_3_19_manual'
+    # input_data_folder = f'/home/jeremy/Downloads/2020_03_06'
+
+    experiment = 'experiment_50'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+
+    # experiment = 'experiment_71'
+    # input_data_folder = f'/media/jeremy/Seagate Portable Drive/data/2020_11_05'
+
 
     try:
-        os.mkdir(f'{path_input}/{experiment}/images/')
+        os.mkdir(f'{input_data_folder}/{experiment}/images/')
     except FileExistsError:
         pass
 
-    png_conversion(input_data_folder = path_input,
-                    experiment = experiment)
+    # png_conversion(input_data_folder = input_data_folder,
+    #                 experiment = experiment)
 
-    # png_conversion_from_one_npy(input_data_folder = path_input,
-    #                             experiment = experiment)
+    png_conversion_from_one_npy(input_data_folder = input_data_folder,
+                                experiment = experiment)

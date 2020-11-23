@@ -27,10 +27,8 @@ def time_serie(input_data_folder, experiment, data_type='raw',
 
     ### PATHS ###
     if data_type == 'raw':
-        # path_input
         path_input_images = f"{input_data_folder}/{experiment}/images/"
     elif data_type ==  'denoised':
-        # path_input_denoised
         path_input_images = f"{input_data_folder}/experiment_{experiment}/denoised_images/"
 
     path_output = f"{input_data_folder}/{experiment}/"
@@ -53,17 +51,24 @@ def time_serie(input_data_folder, experiment, data_type='raw',
 
         w,h = read_image_size(f'{input_data_folder}/{experiment}/{experiment}_info.json')
 
-        #TODO: ref image for defining rois, need to think about what it can be. The best would be a DIC image ?
+        # TODO: ref image for defining rois, need to think about what it can be. The best would be a DIC image ?
         # use an automatic segmentation algorithm if possible with a DIC image ?
         neurons_png = f'{input_data_folder}/{experiment}/neurons.png'
         if os.path.exists(neurons_png):
             print('neurons file for delimiting ROI exists')
             image = cv2.imread(f'{input_data_folder}/{experiment}/neurons.png',
-                           cv2.IMREAD_GRAYSCALE)
-        else:
-            print('no neuron image file')
-            pass
-            # print('''need user input for ROI file path: it needs to be an image
+                                cv2.IMREAD_GRAYSCALE)
+            # from scipy.ndimage import convolve
+            # image_downsampled = convolve(image,
+            #      np.array([[0.25,0.25],[0.25,0.25]]))[:image.shape[0]:2,:image.shape[1]:2]
+            # image = image_downsampled
+
+                                                        #####################################################
+                        ##### TO CHANGE IN UPDATED PIPELINE VERSION #########
+        # else:
+        #     print('no neuron image file')
+        #     pass
+        #     # print('''need user input for ROI file path: it needs to be an image
             #         from the image folder where you can see the neurons''')
             # user_input = [None]
             # global user_input_ok
@@ -77,18 +82,19 @@ def time_serie(input_data_folder, experiment, data_type='raw',
             # else:
             #     thread._stop()
 
+        # if ROI_path.endswith('.txt'):
+        #     with open(ROI_path, "rb") as file:
+        #         rois = pickle.load(file)
+        # elif ROI_path.endswith('.png'):
+        #     image = cv2.imread(ROI_path, cv2.IMREAD_GRAYSCALE)
+        #     cv2.imwrite(f'{input_data_folder}/{experiment}/neurons.png', image)
 
-        if ROI_path.endswith('.txt'):
-            with open(ROI_path, "rb") as file:
-                rois = pickle.load(file)
-        elif ROI_path.endswith('.png'):
-            image = cv2.imread(ROI_path, cv2.IMREAD_GRAYSCALE)
-            cv2.imwrite(f'{input_data_folder}/{experiment}/neurons.png', image)
+            # if image.size == 0:
+            #     print('error with neuron image, cannot define ROIs')
+            # else:
+            #     image = cv2.resize(image, (w,h))
 
-            if image.size == 0:
-                print('error with neuron image, cannot define ROIs')
-            else:
-                image = cv2.resize(image, (w,h))
+        ######################################################################
             # Show the image
             fig = plt.figure()
             plt.imshow(image, interpolation='none', cmap='gray')
@@ -120,12 +126,14 @@ def time_serie(input_data_folder, experiment, data_type='raw',
         for image in tqdm(images):
             img = cv2.imread(f'{path_input_images}/{image}',cv2.IMREAD_GRAYSCALE)
             mask = roi[1]
-            roi_average = np.mean(img[mask.T])
+                            #####################################################
+                            ##### TO CHANGE IN UPDATED PIPELINE VERSION #########
+            # roi_average = np.mean(img[mask.T])
+            roi_average = np.mean(img[mask])
+            ###################################################################
             tmp_time_serie_roi.append(roi_average)
         rois_signal.append(tmp_time_serie_roi)
     print ('generating data plots')
-
-
 
     ### TIMING DATA ###
     json_timings_file = f'{input_data_folder}/{experiment}/{experiment}_timings.json'
@@ -171,8 +179,15 @@ def time_serie(input_data_folder, experiment, data_type='raw',
         #timings_camera_images = [timings_camera_images[i]*10**9 for i in range(len(timings_camera_images))]  ##for dcam api meta
         _timings_dlp_on = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_dlp_on[0] - timings_camera_images_bis[1])/1000
         _timings_dlp_off = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_dlp_off[0] - timings_camera_images_bis[1])/1000
+
+        ##########################################################################
+        #################### TO UPDATE #################### ####################
         _timings_laser_on = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_laser_on[0] - timings_camera_images_bis[1])/1000
+        # _timings_laser_on = 0
         _timings_laser_off = timings_camera_images[0] + (timings_camera_images[0] - timings_camera_images_bis[0]) + (timings_laser_off[0] - timings_camera_images_bis[1])/1000
+        # _timings_laser_off = 0
+        ################################################################################
+        ################################################################################
 
         timings_dlp_on = []
         timings_dlp_off = []
@@ -217,8 +232,8 @@ def time_serie(input_data_folder, experiment, data_type='raw',
         closest_index_laser_on_on_x = takeClosest(timings_laser_on[0]/10**9, x_axis)
         index_laser_on_for_baseline_calc = np.where(x_axis == closest_index_laser_on_on_x)
         # find dlp_on index on x_axis
-        #closest_index_dlp_on_on_x = takeClosest(timings_dlp_on[0]/10**9, x_axis)
-        #index_dlp_on_for_baseline_calc = np.where(x_axis == closest_index_dlp_on_on_x)
+        closest_index_dlp_on_on_x = takeClosest(timings_dlp_on[0]/10**9, x_axis)
+        index_dlp_on_for_baseline_calc = np.where(x_axis == closest_index_dlp_on_on_x)
 
         ## baseline starting and ending
         ## need to be timed on the frames after laser activation I think
@@ -284,6 +299,8 @@ def time_serie(input_data_folder, experiment, data_type='raw',
     ## calculation of percent delta F/F0
     times = []
     baseline_background = np.mean(np.array(rois_signal[0][baseline_starting_frame:baseline_starting_frame+baseline_frame_number])) ## temporal average
+    if baseline_background == 0.0:
+        baseline_background = 1.0
     dF_over_F0_background = ((np.array(rois_signal[0]) - baseline_background) / baseline_background)
     percent_dF_over_F0_background = dF_over_F0_background*100
     # plt.plot(x_axis, percent_dF_over_F0_background, color= 'b', label = rois[0][0], alpha=0.7)
@@ -296,12 +313,18 @@ def time_serie(input_data_folder, experiment, data_type='raw',
     for i in np.arange(1, len(rois_signal), 1):
         _times = []
         baseline_soma = np.mean(np.array(rois_signal[i][baseline_starting_frame:baseline_starting_frame + baseline_frame_number]))
+        if baseline_soma == 0.0:
+            baseline_soma = 1.0
         dF_over_F0_soma = ((np.array(rois_signal[i]) - baseline_soma) / baseline_soma) - dF_over_F0_background
         percent_dF_over_F0_soma = dF_over_F0_soma * 100
         # plt.ylim([-5,35])
         plt.plot(x_axis, percent_dF_over_F0_soma, color = colors[i], label = rois[i][0], alpha=0.7)
         data_export.append(percent_dF_over_F0_soma.tolist())
     if timing:
+        dlp_on_value_on_x = 0
+        dlp_off_value_on_x = 0
+        laser_off_value_on_x = 0
+        laser_on_value_on_x = 0
         for i in range(len(timings_dlp_on)):
             if draw_dlp_timings:
                 dlp_on_value_on_x = timings_dlp_on[i] - x_axis_sorted_values[0]
@@ -316,7 +339,7 @@ def time_serie(input_data_folder, experiment, data_type='raw',
     plt.ylabel(r'$\%$ $\Delta$ F/F0')
     plt.legend()
     if timing == False:
-        plt.savefig(f'{path_output}delta_F_over_F0__whole_data.svg')
+        plt.savefig(f'{path_output}delta_F_over_F0_whole_data.svg')
         #plt.savefig(f'{path_output}delta_F_over_F0__whole_data.png')
     elif timing == True:
         plt.savefig(f'{path_output}delta_F_over_F0_{time_start}_{time_stop}.svg')
@@ -327,6 +350,10 @@ def time_serie(input_data_folder, experiment, data_type='raw',
     data_export = np.array(data_export)
     ## data has format [[ROI1], [ROI2] ..., [ROIn], [X_axis], [[timings_dlp_on(ROI1), timings_dlp_off(ROI1), timings_laser_on(ROI1), timings_laser_off(ROI1)],[...]]
     np.save(f'{path_output}dF_over_F0_backcorrect.npy', data_export)
+    from scipy.io import savemat
+    np.save(f'{path_output}dF_over_F0_backcorrect_ROIs_only.npy', data_export[0])
+    matlab_dict = {'ROI': data_export[0], 'frames': data_export[1]}
+    savemat(f'{path_output}dF_over_F0_backcorrect_ROIs_only.mat', matlab_dict)
     plt.close()
 
     ## ephys-type graph for percent delta F/F0
@@ -335,6 +362,8 @@ def time_serie(input_data_folder, experiment, data_type='raw',
     fig, axs = plt.subplots(len(rois_signal), 1)
     fig.subplots_adjust(hspace=0)
     baseline_roi_background = np.mean(np.array(rois_signal[0][baseline_starting_frame:baseline_starting_frame + baseline_frame_number]))
+    if baseline_roi_background == 0.0:
+        baseline_roi_background = 1.0
     # axs[0].set_ylim([-5,150])
     axs[0].plot(x_axis, percent_dF_over_F0_background, color = 'b', label = rois[0][0], alpha=0.7)
     axs[0].set_axis_off()
@@ -374,8 +403,16 @@ def time_serie(input_data_folder, experiment, data_type='raw',
 
 
 if __name__ == "__main__":
+    # experiment = 'experiment_132'
+    # input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
+    experiment = 'experiment_50'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+    # experiment = 'experiment_95'
+    # input_data_folder = f'/media/jeremy/Seagate Portable Drive/data/2020_11_05'
 
-    experiment = 'experiment_132'
-    input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
-
-    time_serie(input_data_folder, experiment, data_type='raw')
+    time_serie(input_data_folder, experiment, data_type='raw',
+                timing=True, draw_laser_timings=True, draw_dlp_timings=True,
+                time_start=0, time_stop=int(-1))
+    # time_serie(input_data_folder, experiment, data_type='raw',
+    #             timing=False, draw_laser_timings=False, draw_dlp_timings=False,
+    #             time_start=0, time_stop=int(-1))

@@ -21,7 +21,8 @@ python OPTIMAS/pipeline.py \
 --convert_npy_to_png \
 --make_video \
 --roi_analysis \
---trefide_pipeline
+--trefide_pipeline \
+--overwrite
 """
 #########################
 
@@ -54,6 +55,9 @@ parser.add_argument("--trefide_pipeline",
                     action="store_true",
                     help="this is to run the script trefide_pipeline - denoise \
                           demix and compress the data.")
+parser.add_argument('--overwrite',
+                    action = 'store_true',
+                    help = 'true if want to overwrite the data')
 args = parser.parse_args()
 
 if args.input_data_folder:
@@ -69,6 +73,9 @@ for experiment in next(os.walk(input_data_folder))[1]:
             print(f'\n == step 1: merging file ==')
             if os.path.exists(f'{input_data_folder}/{experiment}/raw_data.npy'):
                 print('merged file already exists')
+                if args.overwrite :
+                    print('overwriting')
+                    merge_npy(input_data_folder, experiment)
             else:
                 try:
                     print('generating merged npy files')
@@ -84,6 +91,9 @@ for experiment in next(os.walk(input_data_folder))[1]:
                 try:
                     if len(next(os.walk(f'{input_data_folder}/{experiment}/raw_data'))[2]) == len(next(os.walk(f'{input_data_folder}/{experiment}/images'))[2]):
                         print(f'image files for {experiment} already exist')
+                        if args.overwrite:
+                            print('overwriting files')
+                            png_conversion(input_data_folder, experiment)
                     else:
                         print('image list is incomplete, need to re-run conversion')
                         png_conversion(input_data_folder, experiment)
@@ -103,6 +113,10 @@ for experiment in next(os.walk(input_data_folder))[1]:
                 path_output_video = f'{input_data_folder}/{experiment}/{experiment}_raw.avi'
                 if os.path.isfile(path_output_video):
                     print('existing video file')
+                    if args.overwrite:
+                        make_video(input_data_folder,
+                                   experiment,
+                                   data_type = 'raw')
                 else:
                     print('creating video file')
                     make_video(input_data_folder,
@@ -117,7 +131,11 @@ for experiment in next(os.walk(input_data_folder))[1]:
             print(f'\n == step 4: performing analysis ==')
             try:
                 print('static plots')
-                analysis.time_serie(input_data_folder, experiment)
+                analysis.time_serie(input_data_folder, experiment,
+                                    data_type='raw', timing=False,
+                                    draw_laser_timings=False,
+                                    draw_dlp_timings=False,
+                                    time_start=0, time_stop=int(-1))
                 print('interactive plots')
                 interactive.interactive_plotting(input_data_folder, experiment)
             except:
