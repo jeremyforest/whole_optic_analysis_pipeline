@@ -241,7 +241,7 @@ def time_serie(input_data_folder, experiment, data_type='raw',
         #TODO: need to be adjusted to be up to the frame-1 of dlp activation ?
         baseline_frame_number = 10
     else :
-        baseline_starting_frame = 10
+        baseline_starting_frame = 1000
         baseline_frame_number = 10
 
 
@@ -405,8 +405,8 @@ def time_serie(input_data_folder, experiment, data_type='raw',
 if __name__ == "__main__":
     # experiment = 'experiment_132'
     # input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
-    experiment = 'experiment_50'
-    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+    experiment = 'experiment_41'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_23'
     # experiment = 'experiment_95'
     # input_data_folder = f'/media/jeremy/Seagate Portable Drive/data/2020_11_05'
 

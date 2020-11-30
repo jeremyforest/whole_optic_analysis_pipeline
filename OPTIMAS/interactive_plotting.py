@@ -15,6 +15,7 @@ def interactive_plotting(input_data_folder, experiment,
 
     #### ONLY ENTER EXPERIMENTS WITH NO TIMINGS PROBLEMS
     experiments = [experiment]
+    # experiments = [[experiment[i]] for i in range(len(experiment))]
     # experiments = [89]
     # experiments = [131,132,133,141,142,148]
 
@@ -41,6 +42,7 @@ def interactive_plotting(input_data_folder, experiment,
 
     for experiment in experiments:
         # experiment=89
+        # experiment = experiment[0]
         print(f'working on: {input_data_folder}/{experiment}')
         rois_signal.append(np.load(f'{input_data_folder}/{experiment}/dF_over_F0_backcorrect.npy', allow_pickle=True))
         #if classical_ephy:
@@ -87,6 +89,14 @@ def interactive_plotting(input_data_folder, experiment,
         laser_on_index = x_axis.index(takeClosest(rois_signal[exp_nb][-1][0][laser_on], x_axis)) + shift[exp_nb]
         laser_off_index = x_axis.index(takeClosest(rois_signal[exp_nb][-1][0][laser_off], x_axis)) + shift[exp_nb]
 
+        #adjusting x_axis
+        # padding_length = len(start_padding_array) + len(end_padding_array)
+        # frame_time_difference = x_axis[-2] - x_axis[-3]
+        #
+        # len(x_axis)
+        # [x_axis.append(x_axis[-2] + frame_time_difference) for _ in range(padding_length)]
+        # len(x_axis)
+
         _lst = list(rois_signal[exp_nb][-1][0])
         _lst[0] = x_axis[dlp_on_index]
         _lst[1] = x_axis[dlp_off_index]
@@ -94,7 +104,6 @@ def interactive_plotting(input_data_folder, experiment,
         _lst[3] = x_axis[laser_off_index]
 
         rois_signal[exp_nb][-1][0] = tuple(_lst)
-
     # normalize traces
     if normalize:
         new_rois_signal = rois_signal
@@ -121,7 +130,7 @@ def interactive_plotting(input_data_folder, experiment,
         return ret[n - 1:] / n
 
     rois_signal_moving_average = []
-    moving_average_points = 3
+    moving_average_points = 5
     for trace in range(len(averaged_rois_signal)):
         moving_average_data = np.zeros((1, len(averaged_rois_signal[0])))
         moving_average_data = moving_average(averaged_rois_signal[trace],
@@ -188,7 +197,8 @@ def interactive_plotting(input_data_folder, experiment,
 
 
 
-def interactive_plotting_no_timing(input_data_folder, experiment):
+def interactive_plotting_no_timing(input_data_folder, experiment,
+                                   restrict=False):
     # experiments = [experiment for experiment in experiment]
     experiments = [experiment]
     if len(experiments) > 1:
@@ -232,7 +242,7 @@ def interactive_plotting_no_timing(input_data_folder, experiment):
         return ret[n - 1:] / n
 
     rois_signal_moving_average = []
-    moving_average_points = 3
+    moving_average_points = 5
     for trace in range(len(averaged_rois_signal)):
         moving_average_data = np.zeros((1, len(averaged_rois_signal[0])))
         moving_average_data = moving_average(averaged_rois_signal[trace],
@@ -271,11 +281,8 @@ def interactive_plotting_no_timing(input_data_folder, experiment):
 
 if __name__ == "__main__":
 
-    # experiment = 'experiment_132'
-    # input_data_folder = f'/mnt/home_nas/jeremy/Recherches/Postdoc/Projects/Memory/Computational_Principles_of_Memory/optopatch/data/2020_03_02'
-
-    experiment = 'experiment_50'
-    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+    experiment = 'experiment_41'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_23'
 
     interactive_plotting(input_data_folder, experiment)
     # interactive_plotting_no_timing(input_data_folder, experiment)

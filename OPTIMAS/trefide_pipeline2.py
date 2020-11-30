@@ -24,6 +24,18 @@ from trefide.plot import pixelwise_ranks
 from trefide.extras.util_plot import comparison_plot
 from trefide.video import play_cv2
 
+def normalize(mov):
+    ## normalize each pixel by mu and sigma of each pixel
+    orig_mov_shape = mov.shape
+    mov = mov.reshape(-1,mov.shape[-1])
+    mov.shape
+    mov_sigma = np.std(mov, axis=0)
+    mov_mean = np.average(mov, axis=0)
+    mov_normalized = (mov - mov_mean) / mov_sigma
+    mov_normalized.shape
+    mov = mov_normalized.reshape(orig_mov_shape)
+    mov.shape
+    return mov
 
 def denoising_pipeline(input_data_folder, experiment):
 
@@ -39,6 +51,9 @@ def denoising_pipeline(input_data_folder, experiment):
     mov = mov[:,:,:]
     mov = mov.copy(order='C')
     fov_height, fov_width, num_frames = mov.shape
+
+    # data = mov
+    mov = normalize(mov)
 
     # Generous maximum of rank 50 blocks (safeguard to terminate early if this is hit)
     max_components = 50
@@ -170,7 +185,7 @@ def denoising_pipeline(input_data_folder, experiment):
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_50'
-    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+    experiment = 'experiment_40'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_23'
 
     denoising_pipeline(input_data_folder, experiment)

@@ -60,7 +60,7 @@ if __name__ == "__main__":
     # experiment = 'experiment_merged_3_19_manual'
     # input_data_folder = f'/home/jeremy/Downloads/2020_03_06'
 
-    experiment = 'experiment_50'
+    experiment = 'experiment_merged_196_200_dlp'
     input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
 
     # experiment = 'experiment_71'
@@ -72,8 +72,8 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    # png_conversion(input_data_folder = input_data_folder,
-    #                 experiment = experiment)
+    png_conversion(input_data_folder = input_data_folder,
+                    experiment = experiment)
 
-    png_conversion_from_one_npy(input_data_folder = input_data_folder,
-                                experiment = experiment)
+    # png_conversion_from_one_npy(input_data_folder = input_data_folder,
+    #                             experiment = experiment)
