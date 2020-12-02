@@ -1,7 +1,8 @@
 # OPTIMAS: whOle-oPTical Imaging AnalysiS pipeline
 
 HIgh throughput automated analysis pipeline to pre-process and analyse whole optical electrophysiology data. 
-Under development. Subject to major chamges.
+
+Under development. Subject to major changes.
 
 **To install with anaconda**
 ~~~
