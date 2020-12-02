@@ -8,7 +8,7 @@ Under development. Subject to major changes.
 ~~~
 conda create -n OPTIMAS
 conda activate OPTIMAS
-git clone git@github.com:jeremyforest/whole_optic_gui.git
+git clone git@github.com:jeremyforest/whole_optic_analysis_pipeline.git
 pip install -e .
 ~~~
 
