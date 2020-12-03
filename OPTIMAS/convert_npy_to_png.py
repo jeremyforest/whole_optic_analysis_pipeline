@@ -60,8 +60,8 @@ if __name__ == "__main__":
     # experiment = 'experiment_merged_3_19_manual'
     # input_data_folder = f'/home/jeremy/Downloads/2020_03_06'
 
-    experiment = 'experiment_merged_196_200_dlp'
-    input_data_folder = f'/home/jeremy/Desktop/2020_11_20'
+    experiment = 'experiment_347'
+    input_data_folder = f'/home/jeremy/Desktop/2020_11_23'
 
     # experiment = 'experiment_71'
     # input_data_folder = f'/media/jeremy/Seagate Portable Drive/data/2020_11_05'

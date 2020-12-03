@@ -47,7 +47,7 @@ def denoising_pipeline(input_data_folder, experiment):
     mov = np.load(filename).astype('double')
     num_frames, fov_height, fov_width= mov.shape
     mov = mov.reshape(fov_height, fov_width, num_frames)
-    # mov = mov[:,:,700:700+512]
+    mov = mov[:,:,700:700+256]
     mov = mov[:,:,:]
     mov = mov.copy(order='C')
     fov_height, fov_width, num_frames = mov.shape
@@ -61,16 +61,16 @@ def denoising_pipeline(input_data_folder, experiment):
     # Enable Decimation
     max_iters_main = 10
     max_iters_init = 40
-    d_sub = 1
-    t_sub = 1
+    d_sub = 2
+    t_sub = 2
 
     # Defaults
     consec_failures = 3
     tol = 5e-3
 
     # Set Blocksize Parameters
-    block_height = 16
-    block_width = 16
+    block_height = 32
+    block_width = 32
     overlapping = True
     enable_temporal_denoiser = True
     enable_spatial_denoiser = True
@@ -185,7 +185,7 @@ def denoising_pipeline(input_data_folder, experiment):
 
 if __name__ == "__main__":
 
-    experiment = 'experiment_40'
+    experiment = 'experiment_41'
     input_data_folder = f'/home/jeremy/Desktop/2020_11_23'
 
     denoising_pipeline(input_data_folder, experiment)
